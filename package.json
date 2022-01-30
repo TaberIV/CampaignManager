@@ -2,11 +2,11 @@
   "name": "campaign-manager",
   "version": "1.0.0",
   "description": "A Discord bot used to manage a roleplaying campaign. Tracks dates of events and other information.",
-  "main": "server.js",
-  "type": "module",
+  "main": "src/server.ts",
+  "type": "commonjs",
   "scripts": {
-    "app": "nodemon server",
-    "start": "node server"
+    "app": "nodemon src/server.ts",
+    "start": "ts-node src/server.ts"
   },
   "repository": {
     "type": "git",
@@ -20,11 +20,12 @@
   },
   "homepage": "https://github.com/TaberIV/CampaignManager#readme",
   "devDependencies": {
-    "nodemon": "^2.0.15"
+    "@types/express": "^4.17.13",
+    "nodemon": "^2.0.15",
+    "typescipt": "^1.0.0"
   },
   "dependencies": {
-    "discord.js": "13.6.0",
-    "express": "^4.17.2",
-    "fs": "^0.0.1-security"
+    "discord.js": "^13.6.0",
+    "express": "^4.17.2"
   }
 }

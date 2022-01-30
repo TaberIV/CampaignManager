@@ -1,39 +1,43 @@
-import calendarData from '../data/calendar.js';
+import calendarData from '../data/calendar';
 
 const moonSymbols = ['🌗', '🌘', '🌑', '🌒', '🌓', '🌔', '🌕', '🌖'];
 
-function dateFromStr(dateStr) {
-  const dateParts = dateStr.split('-');
-
-  let date;
-  if (dateParts.length == 3) {
-    date = {
-      year: parseInt(dateParts[0]),
-      month: parseInt(dateParts[1]),
-      day: parseInt(dateParts[2])
-    };
-  } else if (dateParts.length == 2) {
-    date = {
-      year: calendarData.getYear(),
-      month: parseInt(dateParts[0]),
-      day: parseInt(dateParts[1])
-    };
-  }
-
-  return date;
+type Date = {
+  year: number;
+  month: number;
+  day: number;
 }
 
-function getDayOfWeek(dateStr) {
-  const { year, _month, _day } = dateFromStr(dateStr);
+function dateFromStr(dateStr: string): Date {
+  const dateParts = dateStr.split('-');
+
+  let year = 0;
+  let month = 0;
+  let day = 0;
+  if (dateParts.length == 3) {
+    year = parseInt(dateParts[0]);
+    month = parseInt(dateParts[1]);
+    day = parseInt(dateParts[2]);
+  } else if (dateParts.length == 2) {
+    year = calendarData.getYear();
+    month = parseInt(dateParts[0]);
+    day = parseInt(dateParts[1]);
+  }
+
+  return { year, month, day };
+}
+
+function getDayOfWeek(dateStr: string) {
+  const date = dateFromStr(dateStr);
   const weekdays = calendarData.getWeekdays();
   const dayOfYear = getDayOfYear(date);
-  const offset = calendarData.getFirstDay() + (year - calendarData.getYear());
+  const offset = calendarData.getFirstDay() + (date.year - calendarData.getYear());
 
   return weekdays[(dayOfYear - 1 + offset) % weekdays.length];
 }
 
-function getDayOfYear(date) {
-  const { _, month, day } = date;
+function getDayOfYear(date: Date): number {
+  const { month, day } = date;
   const monthsLen = Object.values(calendarData.getMonthsLen());
   monthsLen.splice(month - 1);
 
@@ -45,7 +49,7 @@ function getDayOfYear(date) {
   return dayOfYear;
 }
 
-function getMoonPhase(dateStr, moon = null) {
+function getMoonPhase(dateStr: string) {
   const date = dateFromStr(dateStr);
   const cycleLen = calendarData.getLunarLen();
   const offset = cycleLen - calendarData.getLunarShift() + calendarData.getFirstDay();
@@ -64,9 +68,9 @@ function getMoonPhase(dateStr, moon = null) {
   return moonSymbols[moonIndex];
 }
 
-function getMoonIndex(dayOfYear, offset, lunarCyc) {
-  const full = (dayOfYear + offset - 0.39) % lunarCyc;
-  return Math.floor(full / lunarCyc * moonSymbols.length);
+function getMoonIndex(dayOfYear: number, offset: number, lunarCyc: number) {
+  const day = (dayOfYear + offset - 0.39) % lunarCyc;
+  return Math.floor(day / lunarCyc * moonSymbols.length);
 }
 
 export default { getMoonPhase, getDayOfYear, getDayOfWeek };

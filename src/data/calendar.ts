@@ -1,6 +1,4 @@
-import { readFile } from "fs/promises";
-
-const data = JSON.parse(await readFile('data/sample-calendar.json'));
+import data from "./sample-calendar.json";
 
 function getYearLen() {
   return data.year_len;
@@ -22,12 +20,12 @@ function getWeekdays() {
   return data.weekdays;
 }
 
-function getLunarLen(moon = data.moons[0]) {
-  return data.lunar_cyc[moon];
+function getLunarLen() {
+  return data.lunar_cyc.Luna;
 }
 
-function getLunarShift(moon = data.moons[0]) {
-  return data.lunar_shf[moon];
+function getLunarShift() {
+  return data.lunar_shf.Luna;
 }
 
 function getYear() {

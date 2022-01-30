@@ -1,5 +1,5 @@
 import express from 'express';
-import { startBot } from './app.js';
+import { startBot } from './app';
 
 const app = express();
 const PORT = process.env.PORT || 5000;

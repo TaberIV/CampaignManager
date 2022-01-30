@@ -1,5 +1,5 @@
 # Discord token
-config/default.js
+src/config/default.ts
 
 # Logs
 logs
