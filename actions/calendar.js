@@ -1,5 +1,3 @@
-const { commands, prefix } = require('../config/config');
-const { MessageEmbed } = require('discord.js');
 const calendarData = require('../data/calendar.js')
 
 const moonSymbols = ['🌕', '🌖', '🌗', '🌘', '🌑', '🌒', '🌓', '🌔'];
@@ -25,7 +23,7 @@ function dateFromStr(dateStr) {
   return date;
 }
 
-function getMoonFullness(dayOfYear, lunarLen) {
+function getMoonFullness(dayOfYear, lunarCyc) {
   return dayOfYear % lunarCyc / lunarCyc;
 }
 
@@ -43,11 +41,13 @@ function getDayOfYear(dateStr) {
   return dayOfYear;
 }
 
-function getDayOfWeek(date) {
+function getDayOfWeek(dateStr) {
+  const { year, _month, _day } = dateFromStr(dateStr);
   const weekdays = calendarData.getWeekdays();
-  const dayOfYear = getDayOfYear(date);
+  const dayOfYear = getDayOfYear(dateStr);
+  const offset = calendarData.getFirstDay() + (year - calendarData.getYear());
 
-  return weekdays[(dayOfYear - 1) % weekdays.length]
+  return weekdays[(dayOfYear - 1 + offset) % weekdays.length];
 }
 
 function getMoonPhase(dateStr, moon = null) {

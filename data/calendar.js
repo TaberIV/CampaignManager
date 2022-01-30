@@ -46,6 +46,14 @@ function getYear() {
   return year;
 }
 
+function getFirstDay() {
+  return first_day;
+}
+
+function getNotes() {
+  return notes();
+}
+
 module.exports = {
   getYearLen,
   getNumMonths,
@@ -53,5 +61,7 @@ module.exports = {
   getMonthsLen,
   getWeekdays,
   getLunarLen,
-  getYear
+  getYear,
+  getFirstDay,
+  getNotes
 };
