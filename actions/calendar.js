@@ -1,4 +1,4 @@
-const calendarData = require('../data/calendar.js')
+import calendarData from '../data/calendar.js';
 
 const moonSymbols = ['🌗', '🌘', '🌑', '🌒', '🌓', '🌔', '🌕', '🌖'];
 
@@ -49,8 +49,14 @@ function getMoonPhase(dateStr, moon = null) {
   const date = dateFromStr(dateStr);
   const cycleLen = calendarData.getLunarLen();
   const offset = cycleLen - calendarData.getLunarShift() + calendarData.getFirstDay();
+
+  let days = getDayOfYear(date);
+  if (date.year >= calendarData.getYear()) {
+    days += calendarData.getYearLen() * (date.year - calendarData.getYear())
+  }
+
   const moonIndex = getMoonIndex(
-    getDayOfYear(date),
+    days,
     offset,
     cycleLen
   );
@@ -63,4 +69,4 @@ function getMoonIndex(dayOfYear, offset, lunarCyc) {
   return Math.floor(full / lunarCyc * moonSymbols.length);
 }
 
-module.exports = { getMoonPhase, getDayOfYear, getDayOfWeek };
+export default { getMoonPhase, getDayOfYear, getDayOfWeek };

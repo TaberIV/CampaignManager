@@ -1,7 +1,7 @@
-const { Client, MessageEmbed } = require('discord.js');
-const { botIntents, commands, prefix } = require('./config/config');
-const config = require('./config/default');
-const calendarActions = require('./actions/calendar.js');
+import { Client } from 'discord.js';
+import { botIntents, commands, prefix } from './config/config.js';
+import config from './config/default.js';
+import calendarActions from './actions/calendar.js';
 
 const client = new Client({
   intents: botIntents,
@@ -33,9 +33,6 @@ client.on('messageCreate', async (msg) => {
   }
 });
 
-const startBot = () => {
+export function startBot() {
   client.login(config.DISCORD_TOKEN);
-};
-
-// export startBot as default
-module.exports = { startBot };
+}

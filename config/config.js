@@ -1,4 +1,4 @@
-const { Intents } = require('discord.js');
+import { Intents } from 'discord.js';
 
 const {
   DIRECT_MESSAGES,
@@ -13,11 +13,11 @@ const botIntents = [
 ];
 
 const prefix = '!';
+
 const commands = {
   loadCalendar: "load-calendar",
   moonPhase: "moon",
   dayOfWeek: "weekday"
 };
 
-
-module.exports = { botIntents, commands, prefix };
+export { botIntents, commands, prefix };

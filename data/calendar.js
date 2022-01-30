@@ -1,60 +1,48 @@
-const {
-  year_len,
-  n_months,
-  months,
-  month_len,
-  week_len,
-  weekdays,
-  n_moons,
-  moons,
-  lunar_cyc,
-  lunar_shf,
-  year,
-  first_day,
-  notes
-} = require('./sample-calendar.json');
+import { readFile } from "fs/promises";
+
+const data = JSON.parse(await readFile('data/sample-calendar.json'));
 
 function getYearLen() {
-  return year_len;
+  return data.year_len;
 }
 
 function getNumMonths() {
-  return n_months;
+  return data.n_months;
 }
 
 function getMonths() {
-  return months;
+  return data.months;
 }
 
 function getMonthsLen() {
-  return month_len;
+  return data.month_len;
 }
 
 function getWeekdays() {
-  return weekdays;
+  return data.weekdays;
 }
 
-function getLunarLen(moon = moons[0]) {
-  return lunar_cyc[moon];
+function getLunarLen(moon = data.moons[0]) {
+  return data.lunar_cyc[moon];
 }
 
-function getLunarShift(moon = moons[0]) {
-  return lunar_shf[moon];
+function getLunarShift(moon = data.moons[0]) {
+  return data.lunar_shf[moon];
 }
 
 function getYear() {
-  return year;
+  return data.year;
 }
 
 function getFirstDay() {
-  return first_day;
+  return data.first_day;
 }
 
 function getNotes() {
-  return notes();
+  return data.notes;
 }
 
-module.exports = {
+export default {
   getYearLen,
   getNumMonths,
   getMonths,

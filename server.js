@@ -1,5 +1,5 @@
-const express = require('express');
-const { startBot } = require('./app.js');
+import express from 'express';
+import { startBot } from './app.js';
 
 const app = express();
 const PORT = process.env.PORT || 5000;

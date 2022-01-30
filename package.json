@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "A Discord bot used to manage a roleplaying campaign. Tracks dates of events and other information.",
   "main": "server.js",
+  "type": "module",
   "scripts": {
     "app": "nodemon server",
     "start": "node server"
@@ -23,6 +24,7 @@
   },
   "dependencies": {
     "discord.js": "13.6.0",
-    "express": "^4.17.2"
+    "express": "^4.17.2",
+    "fs": "^0.0.1-security"
   }
 }
