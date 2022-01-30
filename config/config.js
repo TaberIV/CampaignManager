@@ -15,9 +15,8 @@ const botIntents = [
 const prefix = '!';
 const commands = {
   loadCalendar: "load-calendar",
-  moonPhase: "moon-phase",
-  dayOfYear: "day-of-year",
-  dayOfWeek: "day-of-week"
+  moonPhase: "moon",
+  dayOfWeek: "weekday"
 };
 
 

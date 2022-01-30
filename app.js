@@ -25,11 +25,9 @@ client.on('messageCreate', async (msg) => {
   if (userCmd === commands.loadCalendar) {
     msg.channel.send("Command not yet supported.");
   } else if (userCmd === commands.moonPhase) {
-    msg.channel.send("Command not yet supported.");
-  } else if (userCmd === commands.dayOfYear) {
-    msg.reply(calendarActions.getDayOfYear(...args).toString());
+    msg.channel.send(calendarActions.getMoonPhase(...args));
   } else if (userCmd === commands.dayOfWeek) {
-    msg.reply(calendarActions.getDayOfWeek(...args));
+    msg.channel.send(calendarActions.getDayOfWeek(...args));
   } else {
     msg.reply("Didn't understand command: " + userCmd);
   }

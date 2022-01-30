@@ -38,8 +38,8 @@ function getLunarLen(moon = moons[0]) {
   return lunar_cyc[moon];
 }
 
-function getLunarShift() {
-  return lunar_shf;
+function getLunarShift(moon = moons[0]) {
+  return lunar_shf[moon];
 }
 
 function getYear() {
@@ -61,6 +61,7 @@ module.exports = {
   getMonthsLen,
   getWeekdays,
   getLunarLen,
+  getLunarShift,
   getYear,
   getFirstDay,
   getNotes

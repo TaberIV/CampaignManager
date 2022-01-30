@@ -1,6 +1,6 @@
 const calendarData = require('../data/calendar.js')
 
-const moonSymbols = ['🌕', '🌖', '🌗', '🌘', '🌑', '🌒', '🌓', '🌔'];
+const moonSymbols = ['🌗', '🌘', '🌑', '🌒', '🌓', '🌔', '🌕', '🌖'];
 
 function dateFromStr(dateStr) {
   const dateParts = dateStr.split('-');
@@ -23,12 +23,16 @@ function dateFromStr(dateStr) {
   return date;
 }
 
-function getMoonFullness(dayOfYear, lunarCyc) {
-  return dayOfYear % lunarCyc / lunarCyc;
+function getDayOfWeek(dateStr) {
+  const { year, _month, _day } = dateFromStr(dateStr);
+  const weekdays = calendarData.getWeekdays();
+  const dayOfYear = getDayOfYear(date);
+  const offset = calendarData.getFirstDay() + (year - calendarData.getYear());
+
+  return weekdays[(dayOfYear - 1 + offset) % weekdays.length];
 }
 
-function getDayOfYear(dateStr) {
-  const date = dateFromStr(dateStr);
+function getDayOfYear(date) {
   const { _, month, day } = date;
   const monthsLen = Object.values(calendarData.getMonthsLen());
   monthsLen.splice(month - 1);
@@ -41,24 +45,22 @@ function getDayOfYear(dateStr) {
   return dayOfYear;
 }
 
-function getDayOfWeek(dateStr) {
-  const { year, _month, _day } = dateFromStr(dateStr);
-  const weekdays = calendarData.getWeekdays();
-  const dayOfYear = getDayOfYear(dateStr);
-  const offset = calendarData.getFirstDay() + (year - calendarData.getYear());
-
-  return weekdays[(dayOfYear - 1 + offset) % weekdays.length];
-}
-
 function getMoonPhase(dateStr, moon = null) {
   const date = dateFromStr(dateStr);
-
-  const moonIndex = getMoonFullness(
-    calendarData.getDayOfYear(date),
-    calendarData.getLunarLen()
+  const cycleLen = calendarData.getLunarLen();
+  const offset = cycleLen - calendarData.getLunarShift() + calendarData.getFirstDay();
+  const moonIndex = getMoonIndex(
+    getDayOfYear(date),
+    offset,
+    cycleLen
   );
 
   return moonSymbols[moonIndex];
+}
+
+function getMoonIndex(dayOfYear, offset, lunarCyc) {
+  const full = (dayOfYear + offset - 0.39) % lunarCyc;
+  return Math.floor(full / lunarCyc * moonSymbols.length);
 }
 
 module.exports = { getMoonPhase, getDayOfYear, getDayOfWeek };
