@@ -35,4 +35,9 @@ client.on('messageCreate', async (msg) => {
   }
 });
 
-client.login(config.DISCORD_TOKEN);
+const startBot = () => {
+  client.login(config.DISCORD_TOKEN);
+};
+
+// export startBot as default
+module.exports = { startBot };
