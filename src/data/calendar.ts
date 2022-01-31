@@ -12,6 +12,10 @@ function getMonths() {
   return data.months;
 }
 
+function getMonth(month: number) {
+  return data.months[month - 1];
+}
+
 function getMonthsLen() {
   return data.month_len;
 }
@@ -44,6 +48,7 @@ export default {
   getYearLen,
   getNumMonths,
   getMonths,
+  getMonth,
   getMonthsLen,
   getWeekdays,
   getLunarLen,
