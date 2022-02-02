@@ -8,10 +8,26 @@ import {
 import { ApplicationCommandTypes } from "discord.js/typings/enums";
 import calendar from "../actions/calendar";
 import { Command } from "./command";
+import { getNumber } from "./utility";
+import notion from "../data/notion";
 
-const dateArgs: [ApplicationCommandOption, ApplicationCommandOption, ApplicationCommandOption] = [
-  { type: "NUMBER", name: "month", description: "In-game month (number)", required: false },
-  { type: "NUMBER", name: "day", description: "In-game day of month", required: false },
+const dateArgs: [
+  ApplicationCommandOption,
+  ApplicationCommandOption,
+  ApplicationCommandOption
+] = [
+  {
+    type: "NUMBER",
+    name: "month",
+    description: "In-game month (number)",
+    required: false
+  },
+  {
+    type: "NUMBER",
+    name: "day",
+    description: "In-game day of month",
+    required: false
+  },
   { type: "NUMBER", name: "year", description: "In game year", required: false }
 ];
 
@@ -20,44 +36,78 @@ export const logSession: Command = {
   description: "Create a session log.",
   type: ApplicationCommandTypes.CHAT_INPUT,
   options: [
-    { type: "STRING", name: "title", description: "Session title", required: true },
-    { type: "STRING", name: "description", description: "Session description", required: true },
-    { type: "NUMBER", name: "number", description: "Session number", required: false },
+    {
+      type: "STRING",
+      name: "title",
+      description: "Session title",
+      required: true
+    },
+    {
+      type: "STRING",
+      name: "description",
+      description: "Session description",
+      required: true
+    },
+    {
+      type: "NUMBER",
+      name: "number",
+      description: "Session number",
+      required: false
+    },
     ...dateArgs
   ],
   run: async (client: Client, interaction: BaseCommandInteraction) => {
-    const title = interaction.options.get("title", true).value;
-    const number = interaction.options.get("number")?.value
-      ? Number(interaction.options.get("number")?.value)
-      : undefined;
+    const title = String(interaction.options.get("title", true).value);
+    const number = getNumber(interaction.options.get("number"));
+    const month = getNumber(interaction.options.get("month"));
+    const day = getNumber(interaction.options.get("day"));
+    const year = getNumber(interaction.options.get("year"));
+    const author = interaction.user.username;
 
-    const month = interaction.options.get("month")?.value;
-    const day = interaction.options.get("day")?.value;
-    const year = interaction.options.get("year")?.value
-      ? Number(interaction.options.get("year")?.value)
-      : undefined;
+    const gameDate =
+      month && day ? calendar.createDate(month, day, year) : undefined;
+    const gameDateFmt = gameDate ? calendar.formatDate(gameDate) : null;
+    const gameDateStr = gameDate ? calendar.dateToString(gameDate) : null;
+    const moon = gameDate ? calendar.getMoonPhase(gameDate) : null;
 
-    const date =
-      month && day ? calendar.createDate(Number(month), Number(day), year ? Number(year) : undefined) : undefined;
-    const dateStr = date ? calendar.dateString(date) : undefined;
-    const moon = date ? calendar.getMoonPhase(date) : undefined;
+    const description = String(
+      interaction.options.get("description", true).value
+    );
+    console.log(description);
 
-    const description =
-      (moon ? `${moon} ` : "") +
+    const response = await notion.logSession(
+      title,
+      description,
+      number,
+      gameDateFmt,
+      gameDateStr,
+      moon,
+      author
+    );
+
+    const body =
       (number ? `**Session ${number}**\n` : "") +
-      `${interaction.options.get("description", true).value}`;
+      (gameDateFmt
+        ? `**${gameDateFmt}**` + (moon ? ` ${moon}` : "") + "\n"
+        : "") +
+      `${description}`;
 
-    const embed = new MessageEmbed()
-      .setColor("RANDOM")
-      .setTitle(`${title}`)
-      .setDescription(`${description}`)
-      .setFooter(dateStr ? { text: dateStr } : null);
+    if (response && (response as any).url) {
+      const url = (response as any).url;
+      const embed = new MessageEmbed()
+        .setColor("RANDOM")
+        .setTitle(title)
+        .setDescription(`${body}\n[View on Notion](${url})`)
+        .setFooter({
+          text: author
+        });
 
-    const content = embed;
+      const content = embed;
 
-    await interaction.followUp({
-      ephemeral: true,
-      embeds: [embed]
-    });
+      await interaction.followUp({
+        ephemeral: true,
+        embeds: [embed]
+      });
+    }
   }
 };
