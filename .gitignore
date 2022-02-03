@@ -1,5 +1,4 @@
 # Discord token
-src/config/default.ts
 exportTokens.sh
 .vscode
 
