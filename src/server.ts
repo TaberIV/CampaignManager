@@ -16,5 +16,5 @@ app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 startBot();
 
 setInterval(function () {
-  http.get("http://thawing-citadel-08565.herokuapp.com");
+  http.get("http://campaign-mgr.herokuapp.com");
 }, 300000); // every 5 minutes (300000)

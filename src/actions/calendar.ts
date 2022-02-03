@@ -9,6 +9,21 @@ type Date = {
 };
 
 function createDate(month: number, day: number, year: number | null): Date {
+  const monthsLen = calendarData.getMonthsLen();
+  const months = calendarData.getMonths();
+  const valid =
+    Number.isInteger(month) &&
+    Number.isInteger(day) &&
+    (!year || Number.isInteger(year)) &&
+    month > 0 &&
+    month <= months.length &&
+    day > 0 &&
+    day <= monthsLen[months[month - 1]];
+
+  if (!valid) {
+    throw new Error("InvalidDate");
+  }
+
   return { year: year ? year : calendarData.getYear(), month, day };
 }
 
@@ -62,19 +77,21 @@ function getDayOfYear(date: Date): number {
   return dayOfYear;
 }
 
-function getMoonPhase(date: Date) {
-  const cycleLen = calendarData.getLunarLen();
-  const offset =
-    cycleLen - calendarData.getLunarShift() + calendarData.getFirstDay();
-
-  let days = getDayOfYear(date);
-  if (date.year >= calendarData.getYear()) {
+function getMoonPhase(date: Date): string | null {
+  const moons = calendarData.getMoons();
+  if (date.year < calendarData.getYear() || moons.length == 0) {
+    return null;
+  } else {
+    let days = getDayOfYear(date);
     days += calendarData.getYearLen() * (date.year - calendarData.getYear());
+
+    const cycleLen = calendarData.getLunarLen();
+    const offset =
+      cycleLen - calendarData.getLunarShift() + calendarData.getFirstDay();
+
+    const moonIndex = getMoonIndex(days, offset, cycleLen);
+    return moonSymbols[moonIndex];
   }
-
-  const moonIndex = getMoonIndex(days, offset, cycleLen);
-
-  return moonSymbols[moonIndex];
 }
 
 function getMoonIndex(dayOfYear: number, offset: number, lunarCyc: number) {

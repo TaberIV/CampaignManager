@@ -25,17 +25,18 @@ function plainText(content: string) {
 // }
 
 async function logSession(
+  number: number,
   title: string,
   description: string,
-  number: number | null,
-  gameDate: string | null,
-  gameDateRaw: string | null,
-  moon: string | null,
-  author: string
+  gameDate: string,
+  gameDateFmt: string,
+  author: string,
+  moon: string | null
 ): Promise<CreatePageResponse | null> {
   const params: CreatePageParameters = {
     parent: { database_id },
     properties: {
+      number: { type: "number", number: number },
       title: {
         title: plainText(title)
       },
@@ -43,7 +44,14 @@ async function logSession(
         type: "rich_text",
         rich_text: plainText(description)
       },
-      number: { type: "number", number: number },
+      gameDate: {
+        type: "rich_text",
+        rich_text: plainText(gameDate)
+      },
+      gameDateFmt: {
+        type: "rich_text",
+        rich_text: plainText(gameDateFmt)
+      },
       sessionDate: {
         type: "date",
         date: { start: new Date().toISOString().split("T")[0] }
@@ -55,18 +63,6 @@ async function logSession(
     }
   };
 
-  if (gameDate) {
-    params.properties.gameDate = {
-      type: "rich_text",
-      rich_text: plainText(gameDate)
-    };
-  }
-  if (gameDateRaw) {
-    params.properties.gameDateRaw = {
-      type: "rich_text",
-      rich_text: plainText(gameDateRaw)
-    };
-  }
   if (moon) {
     params.properties.moon = {
       type: "rich_text",

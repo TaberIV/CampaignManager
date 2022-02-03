@@ -16,12 +16,16 @@ function getMonth(month: number) {
   return data.months[month - 1];
 }
 
-function getMonthsLen() {
+function getMonthsLen(): { [key: string]: number } {
   return data.month_len;
 }
 
 function getWeekdays() {
   return data.weekdays;
+}
+
+function getMoons(): string[] {
+  return data.moons;
 }
 
 function getLunarLen() {
@@ -40,7 +44,7 @@ function getFirstDay() {
   return data.first_day;
 }
 
-function getNotes() {
+function getNotes(): { [key: string]: string } {
   return data.notes;
 }
 
@@ -51,6 +55,7 @@ export default {
   getMonth,
   getMonthsLen,
   getWeekdays,
+  getMoons,
   getLunarLen,
   getLunarShift,
   getYear,
