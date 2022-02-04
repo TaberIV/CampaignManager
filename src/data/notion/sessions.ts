@@ -81,19 +81,35 @@ async function logSession(session: Session): Promise<string | null> {
   return null;
 }
 
-async function querySessions(sessionNumber: number) {
-  const params = {
-    database_id,
-    filter: {
-      and: [
-        {
+async function querySessions(sessionQuery?: SessionQuery) {
+  let filter: any = { and: [] };
+
+  if (sessionQuery)
+    Object.keys(sessionQuery).forEach((key) => {
+      if (key === "number") {
+        filter.and.push({
           property: "number",
           number: {
-            equals: sessionNumber
+            equals: sessionQuery.number
           }
-        }
-      ]
-    }
+        });
+      } else if (key === "title") {
+        filter.and.push({
+          property: "title",
+          text: {
+            contains: sessionQuery.title
+          }
+        });
+      }
+    });
+
+  const direction: "ascending" | "descending" = "ascending";
+  const sorts = [{ property: "number", direction }];
+
+  const params = {
+    database_id,
+    filter,
+    sorts
   };
 
   const response = await notion.databases.query(params);

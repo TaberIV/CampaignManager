@@ -33,6 +33,26 @@ export const requiredDateArgs: [
   { type: "NUMBER", name: "year", description: "In-game year", required: false }
 ];
 
+export const optionalDateArgs: [
+  ApplicationCommandOption,
+  ApplicationCommandOption,
+  ApplicationCommandOption
+] = [
+  {
+    type: "NUMBER",
+    name: "month",
+    description: "In-game month (number)",
+    required: false
+  },
+  {
+    type: "NUMBER",
+    name: "day",
+    description: "In-game day of month",
+    required: false
+  },
+  { type: "NUMBER", name: "year", description: "In-game year", required: false }
+];
+
 export function createSessionMessage(session: Session, url: string) {
   const body =
     (session.number ? `**Session ${session.number}**\n` : "") +

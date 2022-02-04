@@ -4,9 +4,9 @@ import { Command } from "./commands";
 import { createSessionMessage } from "./utility";
 import notion from "../data/notion/sessions";
 
-export const getSession: Command = {
-  name: "getsession",
-  description: "Get a session log by number.",
+export const findSessions: Command = {
+  name: "findsessions",
+  description: "",
   type: ApplicationCommandTypes.CHAT_INPUT,
   options: [
     {

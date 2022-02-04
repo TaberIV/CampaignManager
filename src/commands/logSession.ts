@@ -7,7 +7,7 @@ import { ApplicationCommandTypes } from "discord.js/typings/enums";
 import calendar from "../utils/calendar";
 import { Command } from "./commands";
 import {
-  requiredDateArgs,
+  optionalDateArgs,
   getNumberOrNull,
   createSessionMessage
 } from "./utility";
@@ -37,7 +37,7 @@ export const logSession: Command = {
       description: "Session description",
       required: true
     },
-    ...requiredDateArgs
+    ...optionalDateArgs
   ],
   run: async (client: Client, interaction: BaseCommandInteraction) => {
     const title = String(interaction.options.get("title", true).value);
