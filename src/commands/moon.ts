@@ -5,8 +5,8 @@ import {
   InternalDiscordGatewayAdapterCreator
 } from "discord.js";
 import { ApplicationCommandTypes } from "discord.js/typings/enums";
-import calendar from "../actions/calendar";
-import { Command } from "./command";
+import calendar from "../utils/calendar";
+import { Command } from "./commands";
 import { getNumberOrNull } from "./utility";
 
 const dateArgs: [

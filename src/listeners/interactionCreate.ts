@@ -9,7 +9,10 @@ export default function (client: Client): void {
   });
 }
 
-async function handleSlashCommand(client: Client, interaction: BaseCommandInteraction): Promise<void> {
+async function handleSlashCommand(
+  client: Client,
+  interaction: BaseCommandInteraction
+): Promise<void> {
   const slashCommand = commands.find((c) => c.name === interaction.commandName);
   if (!slashCommand) {
     interaction.followUp({ content: "An error has occurred" });

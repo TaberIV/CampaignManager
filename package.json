@@ -13,7 +13,8 @@
     "postinstall": "tsc",
     "watch-node": "nodemon dist/index.js",
     "watch-ts": "tsc -w",
-    "deploy": "git push heroku main"
+    "deploy": "git push heroku main",
+    "settokens": ". ./setTokens.sh"
   },
   "repository": {
     "type": "git",

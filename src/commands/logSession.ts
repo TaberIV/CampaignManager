@@ -1,35 +1,18 @@
 import {
   BaseCommandInteraction,
   Client,
-  ApplicationCommandOption,
-  MessageEmbed,
-  EmbedFooterData
+  InteractionReplyOptions
 } from "discord.js";
 import { ApplicationCommandTypes } from "discord.js/typings/enums";
-import calendar from "../actions/calendar";
-import { Command } from "./command";
-import { getNumberOrNull } from "./utility";
-import notion from "../data/notion";
-
-const dateArgs: [
-  ApplicationCommandOption,
-  ApplicationCommandOption,
-  ApplicationCommandOption
-] = [
-  {
-    type: "NUMBER",
-    name: "month",
-    description: "In-game month (number)",
-    required: true
-  },
-  {
-    type: "NUMBER",
-    name: "day",
-    description: "In-game day of month",
-    required: true
-  },
-  { type: "NUMBER", name: "year", description: "In-game year", required: false }
-];
+import calendar from "../utils/calendar";
+import { Command } from "./commands";
+import {
+  requiredDateArgs,
+  getNumberOrNull,
+  createSessionMessage
+} from "./utility";
+import notion from "../data/notion/sessions";
+import { Session } from "src/utils/session";
 
 export const logSession: Command = {
   name: "logsession",
@@ -54,7 +37,7 @@ export const logSession: Command = {
       description: "Session description",
       required: true
     },
-    ...dateArgs
+    ...requiredDateArgs
   ],
   run: async (client: Client, interaction: BaseCommandInteraction) => {
     const title = String(interaction.options.get("title", true).value);
@@ -63,6 +46,9 @@ export const logSession: Command = {
     const day = Number(interaction.options.get("day", true).value);
     const year = getNumberOrNull(interaction.options.get("year"));
     const author = interaction.user.username;
+
+    let followUp: string | InteractionReplyOptions =
+      "There was an internal error.";
 
     try {
       const gameDate = calendar.createDate(month, day, year);
@@ -75,46 +61,28 @@ export const logSession: Command = {
         interaction.options.get("description", true).value
       );
 
-      const response = await notion.logSession(
+      const session: Session = {
         number,
         title,
         description,
-        gameDateStr,
+        gameDate: gameDateStr,
         gameDateFmt,
         author,
         moon
-      );
+      };
 
-      const body =
-        (number ? `**Session ${number}**\n` : "") +
-        (gameDateFmt
-          ? `**${gameDateFmt}**` + (moon ? ` ${moon}` : "") + "\n"
-          : "") +
-        `${description}`;
+      const url = await notion.logSession(session);
 
-      if (response && (response as any).url) {
-        const url = (response as any).url;
-        const embed = new MessageEmbed()
-          .setColor("RANDOM")
-          .setTitle(title)
-          .setDescription(`${body}\n[View on Notion](${url})`)
-          .setFooter({
-            text: author
-          });
-
-        const content = embed;
-
-        await interaction.followUp({
-          ephemeral: true,
-          embeds: [embed]
-        });
+      if (url) {
+        const msg = createSessionMessage(session, url);
+        followUp = msg ? msg : followUp;
       }
     } catch (e) {
       if ((e as Error).message == "InvalidDate") {
-        interaction.followUp("Invalid Date");
-      } else {
-        interaction.followUp("There was an internal error.");
+        followUp = "Invalid Date";
       }
     }
+
+    await interaction.followUp(followUp);
   }
 };
