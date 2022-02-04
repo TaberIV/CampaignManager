@@ -4,6 +4,8 @@ import {
   CreatePageResponse,
   QueryDatabaseResponse
 } from "@notionhq/client/build/src/api-endpoints";
+import { MessageEmbed } from "discord.js";
+import { createSessionMessage, getFollowUp } from "../../commands/utility";
 import { Session, SessionQuery } from "src/utils/session";
 // import config from "../config/default";
 
@@ -48,7 +50,7 @@ async function logSession(session: Session): Promise<string | null> {
       },
       sessionDate: {
         type: "date",
-        date: { start: new Date().toISOString().split("T")[0] }
+        date: { start: session.sessionDate }
       },
       author: {
         type: "rich_text",
@@ -113,84 +115,87 @@ async function querySessions(sessionQuery?: SessionQuery) {
   };
 
   const response = await notion.databases.query(params);
-  const page = response.results[0];
+  const sessions: Array<{ session: SessionQuery; url: string }> = [];
 
-  if ("properties" in page) {
-    const props = page.properties;
+  response.results.forEach((page) => {
+    if ("properties" in page) {
+      const props = page.properties;
 
-    let number: number;
-    if (
-      props["number"] &&
-      props["number"].type === "number" &&
-      props["number"].number !== null
-    ) {
-      number = props["number"].number;
+      let number: number | undefined;
+      if (
+        props["number"] &&
+        props["number"].type === "number" &&
+        props["number"].number !== null
+      ) {
+        number = props["number"].number;
+      }
 
-      let title: string;
+      let title: string | undefined;
       if (props["title"] && props["title"].type === "title") {
         title = "";
         props["title"].title.forEach(
           (rich_text) => (title += rich_text.plain_text)
         );
-
-        let description: string;
-        if (props["description"] && props["description"].type === "rich_text") {
-          description = "";
-          props["description"].rich_text.forEach(
-            (rich_text) => (description += rich_text.plain_text)
-          );
-
-          let gameDate: string;
-          if (props["gameDate"] && props["gameDate"].type === "rich_text") {
-            gameDate = "";
-            props["gameDate"].rich_text.forEach(
-              (rich_text) => (gameDate += rich_text.plain_text)
-            );
-
-            let gameDateFmt: string;
-            if (
-              props["gameDateFmt"] &&
-              props["gameDateFmt"].type === "rich_text"
-            ) {
-              gameDateFmt = "";
-              props["gameDateFmt"].rich_text.forEach(
-                (rich_text) => (gameDateFmt += rich_text.plain_text)
-              );
-
-              let author: string;
-              if (props["author"] && props["author"].type === "rich_text") {
-                author = "";
-                props["author"].rich_text.forEach(
-                  (rich_text) => (author += rich_text.plain_text)
-                );
-
-                let moon: string | null = null;
-                if (props["moon"] && props["moon"].type === "rich_text") {
-                  moon = props["moon"].rich_text[0].plain_text;
-                }
-
-                if (number && title) {
-                  const session: Session = {
-                    number,
-                    title,
-                    description,
-                    gameDate,
-                    gameDateFmt,
-                    author,
-                    moon
-                  };
-                  const url = page.url;
-                  return { session, url };
-                }
-              }
-            }
-          }
-        }
       }
-    }
-  }
 
-  return null;
+      let description: string | undefined;
+      if (props["description"] && props["description"].type === "rich_text") {
+        description = "";
+        props["description"].rich_text.forEach(
+          (rich_text) => (description += rich_text.plain_text)
+        );
+      }
+
+      let gameDate: string | undefined;
+      if (props["gameDate"] && props["gameDate"].type === "rich_text") {
+        gameDate = "";
+        props["gameDate"].rich_text.forEach(
+          (rich_text) => (gameDate += rich_text.plain_text)
+        );
+      }
+
+      let gameDateFmt: string | undefined;
+      if (props["gameDateFmt"] && props["gameDateFmt"].type === "rich_text") {
+        gameDateFmt = "";
+        props["gameDateFmt"].rich_text.forEach(
+          (rich_text) => (gameDateFmt += rich_text.plain_text)
+        );
+      }
+
+      let author: string | undefined;
+      if (props["author"] && props["author"].type === "rich_text") {
+        author = "";
+        props["author"].rich_text.forEach(
+          (rich_text) => (author += rich_text.plain_text)
+        );
+      }
+
+      let moon: string | null = null;
+      if (props["moon"] && props["moon"].type === "rich_text") {
+        moon = props["moon"].rich_text[0]?.plain_text;
+      }
+
+      let sessionDate: string | undefined;
+      if (props["sessionDate"] && props["sessionDate"].type === "date") {
+        sessionDate = props["sessionDate"].date?.start;
+      }
+
+      const session: SessionQuery = {
+        number,
+        title,
+        description,
+        gameDate,
+        gameDateFmt,
+        author,
+        moon,
+        sessionDate
+      };
+      const url = page.url;
+      sessions.push({ session, url });
+    }
+  });
+
+  return getFollowUp(sessions);
 }
 
 export default { logSession, querySessions };

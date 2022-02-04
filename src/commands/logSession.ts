@@ -40,12 +40,16 @@ export const logSession: Command = {
     ...optionalDateArgs
   ],
   run: async (client: Client, interaction: BaseCommandInteraction) => {
-    const title = String(interaction.options.get("title", true).value);
     const number = Number(interaction.options.get("number", true).value);
+    const title = String(interaction.options.get("title", true).value);
+    const description = String(
+      interaction.options.get("description", true).value
+    );
     const month = Number(interaction.options.get("month", true).value);
     const day = Number(interaction.options.get("day", true).value);
     const year = getNumberOrNull(interaction.options.get("year"));
     const author = interaction.user.username;
+    const sessionDate = new Date().toISOString().split("T")[0];
 
     let followUp: string | InteractionReplyOptions =
       "There was an internal error.";
@@ -57,10 +61,6 @@ export const logSession: Command = {
       const gameDateStr = calendar.dateToString(gameDate);
       const moon = calendar.getMoonPhase(gameDate);
 
-      const description = String(
-        interaction.options.get("description", true).value
-      );
-
       const session: Session = {
         number,
         title,
@@ -68,14 +68,15 @@ export const logSession: Command = {
         gameDate: gameDateStr,
         gameDateFmt,
         author,
-        moon
+        moon,
+        sessionDate
       };
 
       const url = await notion.logSession(session);
 
       if (url) {
-        const msg = createSessionMessage(session, url);
-        followUp = msg ? msg : followUp;
+        const embed = createSessionMessage(session, url);
+        followUp = { ephemeral: true, embeds: [embed] };
       }
     } catch (e) {
       if ((e as Error).message == "InvalidDate") {

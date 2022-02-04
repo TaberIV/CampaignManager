@@ -1,8 +1,9 @@
-import { BaseCommandInteraction, Client } from "discord.js";
+import { BaseCommandInteraction, Client, MessageEmbed } from "discord.js";
 import { ApplicationCommandTypes } from "discord.js/typings/enums";
 import { Command } from "./commands";
 import { createSessionMessage } from "./utility";
 import notion from "../data/notion/sessions";
+import { SessionQuery } from "src/utils/session";
 
 export const getSession: Command = {
   name: "getsession",
@@ -18,12 +19,18 @@ export const getSession: Command = {
   ],
   run: async (client: Client, interaction: BaseCommandInteraction) => {
     const number = Number(interaction.options.get("number", true).value);
-
     const response = await notion.querySessions({ number });
+    interaction.followUp(response);
+  }
+};
 
-    if (response) {
-      const { session, url } = response;
-      interaction.followUp(createSessionMessage(session, url));
-    }
+export const getAllSessions: Command = {
+  name: "readlog",
+  description: "View the entire session log.",
+  type: ApplicationCommandTypes.CHAT_INPUT,
+  options: [],
+  run: async (client: Client, interaction: BaseCommandInteraction) => {
+    const response = await notion.querySessions();
+    interaction.followUp(response);
   }
 };

@@ -1,13 +1,9 @@
-import { CreatePageResponse } from "@notionhq/client/build/src/api-endpoints";
 import {
   ApplicationCommandOption,
-  BaseCommandInteraction,
-  CacheType,
   CommandInteractionOption,
-  CommandInteractionOptionResolver,
   MessageEmbed
 } from "discord.js";
-import { Session } from "src/utils/session";
+import { SessionQuery } from "src/utils/session";
 
 export function getNumberOrNull(option: CommandInteractionOption | null) {
   return option && option.value ? Number(option.value) : null;
@@ -53,7 +49,7 @@ export const optionalDateArgs: [
   { type: "NUMBER", name: "year", description: "In-game year", required: false }
 ];
 
-export function createSessionMessage(session: Session, url: string) {
+export function createSessionMessage(session: SessionQuery, url: string) {
   const body =
     (session.number ? `**Session ${session.number}**\n` : "") +
     (session.gameDateFmt
@@ -62,16 +58,36 @@ export function createSessionMessage(session: Session, url: string) {
         "\n"
       : "") +
     `${session.description}`;
+
+  const footer =
+    (session.author ? session.author : "") +
+    (session.author && session.sessionDate ? ", " : "") +
+    (session.sessionDate ? new Date(session.sessionDate).toDateString() : "");
+
   const embed = new MessageEmbed()
     .setColor("RANDOM")
-    .setTitle(session.title)
+    .setTitle(`${session.title}`)
     .setDescription(`${body}\n[View on Notion](${url})`)
     .setFooter({
-      text: session.author
+      text: footer
     });
 
+  return embed;
+}
+
+export function getFollowUp(
+  response: {
+    session: SessionQuery;
+    url: string;
+  }[]
+) {
+  const embeds: Array<MessageEmbed> = [];
+  response.forEach((res) => {
+    const { session, url } = res;
+    embeds.push(createSessionMessage(session, url));
+  });
   return {
     ephemeral: true,
-    embeds: [embed]
+    embeds
   };
 }
