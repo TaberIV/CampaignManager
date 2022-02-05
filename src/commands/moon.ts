@@ -2,7 +2,8 @@ import {
   BaseCommandInteraction,
   Client,
   ApplicationCommandOption,
-  InternalDiscordGatewayAdapterCreator
+  InternalDiscordGatewayAdapterCreator,
+  InteractionReplyOptions
 } from "discord.js";
 import { ApplicationCommandTypes } from "discord.js/typings/enums";
 import calendar from "../utils/calendar";
@@ -38,22 +39,21 @@ export const moon: Command = {
     const month = Number(interaction.options.get("month", true).value);
     const day = Number(interaction.options.get("day", true).value);
     const year = getNumberOrNull(interaction.options.get("year"));
+    const date = calendar.createDate(month, day, year);
 
-    try {
-      const content = calendar.getMoonPhase(
-        calendar.createDate(month, day, year)
-      );
+    let followUp: string | InteractionReplyOptions = "";
 
-      await interaction.followUp({
+    if (date) {
+      const content = calendar.getMoonPhase(date);
+
+      followUp = {
         ephemeral: true,
         content
-      });
-    } catch (e) {
-      if ((e as Error).message == "InvalidDate") {
-        interaction.followUp("Invalid Date");
-      } else {
-        interaction.followUp("There was an internal error.");
-      }
+      };
+    } else {
+      followUp = "Invalid Date";
     }
+
+    interaction.followUp(followUp);
   }
 };

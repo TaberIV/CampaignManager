@@ -3,6 +3,9 @@ export type Session = {
   title: string;
   description: string;
   gameDate: string;
+  day: number;
+  month: number;
+  year: number;
   gameDateFmt: string;
   author: string;
   moon: string | null;
@@ -14,6 +17,9 @@ export type SessionQuery = {
   title?: string;
   description?: string;
   gameDate?: string;
+  day?: number;
+  month?: number;
+  year?: number;
   gameDateFmt?: string;
   author?: string;
   moon?: string | null;

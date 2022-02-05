@@ -1,12 +1,25 @@
 import {
   ApplicationCommandOption,
   CommandInteractionOption,
+  InteractionReplyOptions,
   MessageEmbed
 } from "discord.js";
 import { SessionQuery } from "src/utils/session";
 
 export function getNumberOrNull(option: CommandInteractionOption | null) {
   return option && option.value ? Number(option.value) : null;
+}
+
+export function getStringOrNull(option: CommandInteractionOption | null) {
+  return option && option.value ? String(option.value) : null;
+}
+
+export function getNumberOrUndefined(option: CommandInteractionOption | null) {
+  return option && option.value ? Number(option.value) : undefined;
+}
+
+export function getStringOrUndefined(option: CommandInteractionOption | null) {
+  return option && option.value ? String(option.value) : undefined;
 }
 
 export const requiredDateArgs: [
@@ -75,12 +88,15 @@ export function createSessionMessage(session: SessionQuery, url: string) {
   return embed;
 }
 
+export type FollowUp = InteractionReplyOptions | string;
+
 export function getFollowUp(
   response: {
     session: SessionQuery;
     url: string;
-  }[]
-) {
+  }[],
+  content?: string
+): FollowUp {
   const embeds: Array<MessageEmbed> = [];
   response.forEach((res) => {
     const { session, url } = res;
@@ -88,6 +104,7 @@ export function getFollowUp(
   });
   return {
     ephemeral: true,
-    embeds
+    embeds,
+    content
   };
 }

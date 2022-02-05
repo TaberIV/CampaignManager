@@ -1,6 +1,9 @@
+import { moon } from "src/commands/moon";
 import calendarData from "../data/calendar";
 
 const moonSymbols = ["🌗", "🌘", "🌑", "🌒", "🌓", "🌔", "🌕", "🌖"];
+
+const peakSymbols = { "🌘": "🌜", "🌑": "🌚", "🌒": "🌛", "🌕": "🌝" };
 
 type Date = {
   year: number;
@@ -8,7 +11,13 @@ type Date = {
   day: number;
 };
 
-function createDate(month: number, day: number, year: number | null): Date {
+export const DateError = new Error("InvalidDate");
+
+function createDate(
+  month: number,
+  day: number,
+  year: number | null
+): Date | null {
   const monthsLen = calendarData.getMonthsLen();
   const months = calendarData.getMonths();
   const valid =
@@ -20,11 +29,11 @@ function createDate(month: number, day: number, year: number | null): Date {
     day > 0 &&
     day <= monthsLen[months[month - 1]];
 
-  if (!valid) {
-    throw new Error("InvalidDate");
-  }
+  const date = valid
+    ? { year: year ? year : calendarData.getYear(), month, day }
+    : null;
 
-  return { year: year ? year : calendarData.getYear(), month, day };
+  return date;
 }
 
 function formatDate(date: Date, moon?: boolean): string {
@@ -89,14 +98,30 @@ function getMoonPhase(date: Date): string | null {
     const offset =
       cycleLen - calendarData.getLunarShift() + calendarData.getFirstDay();
 
-    const moonIndex = getMoonIndex(days, offset, cycleLen);
-    return moonSymbols[moonIndex];
-  }
-}
+    const day = (days + offset - 0.39) % cycleLen;
+    const moonVal = (day / cycleLen) * moonSymbols.length;
+    const moonIndex = Math.floor(moonVal);
 
-function getMoonIndex(dayOfYear: number, offset: number, lunarCyc: number) {
-  const day = (dayOfYear + offset - 0.39) % lunarCyc;
-  return Math.floor((day / lunarCyc) * moonSymbols.length);
+    const phaseProg = moonVal - moonIndex;
+
+    let symbol = moonSymbols[moonIndex];
+
+    const isPeak =
+      Math.abs(0.5 - phaseProg) < moonSymbols.length / 2 / cycleLen;
+
+    if (isPeak && symbol in peakSymbols) {
+      symbol =
+        peakSymbols[
+          symbol as
+            | "\uD83C\uDF18"
+            | "\uD83C\uDF11"
+            | "\uD83C\uDF12"
+            | "\uD83C\uDF15"
+        ];
+    }
+
+    return symbol;
+  }
 }
 
 export default {

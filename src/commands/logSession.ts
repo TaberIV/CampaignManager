@@ -9,7 +9,8 @@ import { Command } from "./commands";
 import {
   optionalDateArgs,
   getNumberOrNull,
-  createSessionMessage
+  createSessionMessage,
+  FollowUp
 } from "./utility";
 import notion from "../data/notion/sessions";
 import { Session } from "src/utils/session";
@@ -49,38 +50,41 @@ export const logSession: Command = {
     const day = Number(interaction.options.get("day", true).value);
     const year = getNumberOrNull(interaction.options.get("year"));
     const author = interaction.user.username;
+    const gameDate = calendar.createDate(month, day, year);
     const sessionDate = new Date().toISOString().split("T")[0];
 
-    let followUp: string | InteractionReplyOptions =
-      "There was an internal error.";
+    let followUp: FollowUp = "";
 
-    try {
-      const gameDate = calendar.createDate(month, day, year);
+    if (!number || number < 0) {
+      followUp = "Session number cannot be negative.";
+    } else if (gameDate == null) {
+      followUp = "Invalid Date";
+    } else {
+      try {
+        const gameDateFmt = calendar.formatDate(gameDate);
+        const gameDateStr = calendar.dateToString(gameDate);
+        const moon = calendar.getMoonPhase(gameDate);
 
-      const gameDateFmt = calendar.formatDate(gameDate);
-      const gameDateStr = calendar.dateToString(gameDate);
-      const moon = calendar.getMoonPhase(gameDate);
+        const session: Session = {
+          number,
+          title,
+          description,
+          gameDate: gameDateStr,
+          ...gameDate,
+          gameDateFmt,
+          author,
+          moon,
+          sessionDate
+        };
 
-      const session: Session = {
-        number,
-        title,
-        description,
-        gameDate: gameDateStr,
-        gameDateFmt,
-        author,
-        moon,
-        sessionDate
-      };
+        const url = await notion.logSession(session);
 
-      const url = await notion.logSession(session);
-
-      if (url) {
-        const embed = createSessionMessage(session, url);
-        followUp = { ephemeral: true, embeds: [embed] };
-      }
-    } catch (e) {
-      if ((e as Error).message == "InvalidDate") {
-        followUp = "Invalid Date";
+        if (url) {
+          const embed = createSessionMessage(session, url);
+          followUp = { ephemeral: true, embeds: [embed] };
+        }
+      } catch (e) {
+        followUp = "There was an internal error.";
       }
     }
 

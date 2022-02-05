@@ -4,8 +4,11 @@ import {
   CreatePageResponse,
   QueryDatabaseResponse
 } from "@notionhq/client/build/src/api-endpoints";
-import { MessageEmbed } from "discord.js";
-import { createSessionMessage, getFollowUp } from "../../commands/utility";
+import { InteractionReplyOptions, MessageEmbed } from "discord.js";
+import {
+  createSessionMessage,
+  getFollowUp as createFollowUp
+} from "../../commands/utility";
 import { Session, SessionQuery } from "src/utils/session";
 // import config from "../config/default";
 
@@ -24,7 +27,7 @@ function plainText(content: string) {
 //   gameDateRaw: string | null,
 //   moon: string | null,
 //   author: string
-// ): Array<BlockObjectRequest> | null {
+// ): BlockObjectRequest> | nul[] {
 //   return null;
 // }
 
@@ -43,6 +46,18 @@ async function logSession(session: Session): Promise<string | null> {
       gameDate: {
         type: "rich_text",
         rich_text: plainText(session.gameDate)
+      },
+      day: {
+        type: "number",
+        number: session.number
+      },
+      month: {
+        type: "number",
+        number: session.number
+      },
+      year: {
+        type: "number",
+        number: session.number
       },
       gameDateFmt: {
         type: "rich_text",
@@ -83,40 +98,167 @@ async function logSession(session: Session): Promise<string | null> {
   return null;
 }
 
-async function querySessions(sessionQuery?: SessionQuery) {
-  let filter: any = { and: [] };
+async function updateSession(session: SessionQuery) {
+  if (session.number) {
+    const response = await notion.databases.query({
+      database_id,
+      filter: {
+        property: "number",
+        number: {
+          equals: session.number
+        }
+      }
+    });
 
-  if (sessionQuery)
-    Object.keys(sessionQuery).forEach((key) => {
-      if (key === "number") {
-        filter.and.push({
-          property: "number",
-          number: {
-            equals: sessionQuery.number
+    const sessions: { session: SessionQuery; url: string }[] =
+      parseSessions(response);
+
+    if (response.results.length === 1) {
+      const [page] = response.results;
+      const [res] = sessions;
+
+      if ("properties" in page) {
+        const properties: any = {
+          number: { type: "number", number: session.number }
+        };
+
+        if (session.title) {
+          properties.title = {
+            title: plainText(session.title)
+          };
+        }
+        if (session.description) {
+          properties.description = {
+            description: plainText(session.description)
+          };
+        }
+        if (session.gameDate) {
+          properties.gameDate = {
+            gameDate: plainText(session.gameDate)
+          };
+        }
+        if (session.day) {
+          properties.day = {
+            day: session.day
+          };
+        }
+        if (session.month) {
+          properties.month = {
+            month: session.month
+          };
+        }
+        if (session.year) {
+          properties.year = {
+            year: session.year
+          };
+        }
+        if (session.gameDateFmt) {
+          properties.gameDateFmt = {
+            gameDateFmt: plainText(session.gameDateFmt)
+          };
+        }
+        if (session.sessionDate) {
+          properties.sessionDate = {
+            sessionDate: plainText(session.sessionDate)
+          };
+        }
+
+        if (session.author) {
+          if (
+            "author" in page.properties &&
+            "rich_text" in page.properties.author
+          ) {
+            let existingAuthor = "";
+            page.properties.author.rich_text.forEach((rich_text) => {
+              existingAuthor += rich_text.plain_text;
+            });
+
+            const author = existingAuthor.includes(session.author)
+              ? existingAuthor
+              : existingAuthor + session.author;
+            properties.author = {
+              author
+            };
+          } else {
+            properties.author = {
+              author: plainText(session.author)
+            };
           }
+        }
+
+        const updateRes = await notion.pages.update({
+          page_id: page.id,
+          properties
         });
-      } else if (key === "title") {
-        filter.and.push({
+      }
+    } else {
+      return createFollowUp(
+        sessions,
+        "The following logs have duplicate sessions numbers, this is invalid. No changes were made."
+      );
+    }
+  }
+
+  return "Must specify a session number";
+}
+
+async function querySessions(
+  sessionQuery?: SessionQuery,
+  direction: "ascending" | "descending" = "ascending"
+) {
+  let filter: any = { and: [], or: [] };
+
+  if (sessionQuery) {
+    Object.keys(sessionQuery).forEach((key) => {
+      if (key === "number" && sessionQuery.number) {
+        if (sessionQuery.number >= 0) {
+          filter.and.push({
+            property: "number",
+            number: {
+              equals: sessionQuery.number
+            }
+          });
+        }
+      } else if (key === "title" && sessionQuery.title) {
+        filter.or.push({
           property: "title",
           text: {
             contains: sessionQuery.title
           }
         });
+      } else if (key === "description" && sessionQuery.description) {
+        filter.or.push({
+          property: "description",
+          text: {
+            contains: sessionQuery.description
+          }
+        });
       }
     });
+  }
 
-  const direction: "ascending" | "descending" = "ascending";
   const sorts = [{ property: "number", direction }];
 
-  const params = {
+  const response = await notion.databases.query({
     database_id,
     filter,
     sorts
-  };
+  });
 
-  const response = await notion.databases.query(params);
-  const sessions: Array<{ session: SessionQuery; url: string }> = [];
+  const sessions: { session: SessionQuery; url: string }[] =
+    parseSessions(response);
 
+  if (sessionQuery?.number && sessionQuery.number < 0) {
+    return createFollowUp([sessions[sessions.length + sessionQuery.number]]);
+  } else {
+    return createFollowUp(sessions);
+  }
+}
+
+export default { logSession, querySessions, updateSession };
+
+function parseSessions(response: QueryDatabaseResponse) {
+  const sessions: { session: SessionQuery; url: string }[] = [];
   response.results.forEach((page) => {
     if ("properties" in page) {
       const props = page.properties;
@@ -195,7 +337,5 @@ async function querySessions(sessionQuery?: SessionQuery) {
     }
   });
 
-  return getFollowUp(sessions);
+  return sessions;
 }
-
-export default { logSession, querySessions };
