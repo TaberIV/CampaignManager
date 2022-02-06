@@ -179,16 +179,10 @@ async function updateSession(session?: SessionQuery) {
           }
 
           if (session.author && edited) {
-            if (res.author && !res.author.split(",").includes(session.author)) {
+            if (res.author && !res.author.includes(session.author)) {
               properties.author = {
                 type: "rich_text",
                 rich_text: plainText(`${res.author}, ${session?.author}`),
-                id: page.properties.author.id
-              };
-            } else {
-              properties.author = {
-                type: "rich_text",
-                rich_text: plainText(session?.author),
                 id: page.properties.author.id
               };
             }
