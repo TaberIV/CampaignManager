@@ -99,34 +99,24 @@ async function updateLog(session?: SessionInfo) {
             updatedSession.description = res.description;
           }
 
-          if (session.day) {
+          if (session.gameDate) {
             properties.day = {
               type: "number",
-              number: session.day,
+              number: session.gameDate.day,
               id: page.properties.day.id
             };
-          } else if (res.day) {
-            updatedSession.day = res.day;
-          }
-
-          if (session.month) {
             properties.month = {
               type: "number",
-              number: session.month,
+              number: session.gameDate.month,
               id: page.properties.month.id
             };
-          } else if (res.month) {
-            updatedSession.month = res.month;
-          }
-
-          if (session.year) {
             properties.year = {
               type: "number",
-              number: session.year,
+              number: session.gameDate.year,
               id: page.properties.year.id
             };
-          } else if (res.year) {
-            updatedSession.year = res.year;
+          } else if (res.gameDate) {
+            updatedSession.gameDate = res.gameDate;
           }
 
           if (session.author && edited) {
@@ -141,89 +131,108 @@ async function updateLog(session?: SessionInfo) {
         }
 
         // Derived values
-        if (updatedSession.year && updatedSession.month && updatedSession.day) {
-          const updatedDate = calendar.createDate(
-            updatedSession.month,
-            updatedSession.day,
-            updatedSession.year
+        if (updatedSession.gameDate) {
+          updatedSession.gameDateStr = calendar.formatDate(
+            updatedSession.gameDate
           );
+          properties.gameDate = {
+            type: "rich_text",
+            rich_text: plainText(updatedSession.gameDateStr),
+            id: page.properties.gameDate.id
+          };
 
-          if (updatedDate) {
-            updatedSession.gameDate = calendar.formatDate(updatedDate);
-            properties.gameDate = {
+          updatedSession.moon = calendar.getMoonPhase(updatedSession.gameDate);
+
+          if (updatedSession.moon) {
+            properties.moon = {
               type: "rich_text",
-              rich_text: plainText(updatedSession.gameDate),
-              id: page.properties.gameDate.id
+              rich_text: plainText(updatedSession.moon),
+              id: page.properties.moon.id
             };
           }
 
-          updatedSession.moon = updatedDate
-            ? calendar.getMoonPhase(updatedDate)
-            : session?.moon;
-        }
+          await notion.pages.update({
+            page_id: page.id,
+            properties
+          });
 
-        if (updatedSession.moon) {
-          properties.moon = {
-            type: "rich_text",
-            rich_text: plainText(updatedSession.moon),
-            id: page.properties.moon.id
+          return {
+            session: updatedSession,
+            url
           };
+        } else {
+          return { session: res, url, error: "Invalid Date" };
         }
-
-        await notion.pages.update({
-          page_id: page.id,
-          properties
-        });
-
-        return {
-          session: updatedSession,
-          url
-        };
       }
-      return { session: { title: "Error retrieving session" }, url };
+
+      return {
+        session: {} as SessionInfo,
+        url,
+        error: "Error Retriving Session"
+      };
     })
   );
 
-  const content =
-    entries.length == 1 && entries[0]
-      ? `Session ${entries[0].session.number}: **${entries[0].session.title}** was updated successfully.`
-      : "All logs updated successfully.";
+  let content = "";
+  // entries.length == 1 && entries[0].session
+  //   ? `Session ${entries[0].session.number}: **${entries[0].session.title}** was updated successfully.`
+  //   :
+
+  if (entries.length === 0) {
+    content = "No logs found.";
+  } else if (entries.length == 1) {
+    content = entries[0].error
+      ? entries[0].error
+      : `Session ${entries[0].session.number}: **${entries[0].session.title}** was updated successfully.`;
+  } else {
+    const errors = entries
+      .map((e) =>
+        e.error ? `Error in session ${e.session.number}: ${e.error}` : undefined
+      )
+      .filter((e) => e !== undefined);
+
+    content =
+      errors.length > 0 ? errors.join("\n") : "All logs updated successfully.";
+  }
+
   return getFollowUp(entries, content);
 }
 
 async function querySessions(
-  sessionQuery?: SessionInfo,
+  query?: { number?: number; search?: string },
   direction: "ascending" | "descending" = "ascending"
 ) {
-  let filter: any = { and: [], or: [] };
+  let filter: any = query ? { and: [] } : {};
 
-  if (sessionQuery) {
-    Object.keys(sessionQuery).forEach((key) => {
-      if (key === "number" && sessionQuery.number) {
-        if (sessionQuery.number >= 0) {
-          filter.and.push({
-            property: "number",
-            number: {
-              equals: sessionQuery.number
-            }
-          });
-        }
-      } else if (key === "title" && sessionQuery.title) {
-        filter.or.push({
-          property: "title",
-          text: {
-            contains: sessionQuery.title
-          }
-        });
-      } else if (key === "description" && sessionQuery.description) {
-        filter.or.push({
-          property: "description",
-          text: {
-            contains: sessionQuery.description
+  if (query) {
+    if (query.number) {
+      if (query.number >= 0) {
+        filter.and.push({
+          property: "number",
+          number: {
+            equals: query.number
           }
         });
       }
-    });
+    }
+    if (query.search) {
+      filter.and.push({
+        or: [
+          {
+            property: "title",
+            text: {
+              contains: query.search
+            }
+          },
+          {
+            property: "description",
+            text: {
+              contains: query.search
+            }
+          }
+        ]
+      });
+    }
   }
 
   const sorts = [{ property: "number", direction }];
@@ -238,9 +247,9 @@ async function querySessions(
     parseSessions(response);
 
   if (sessions.length > 0) {
-    if (sessionQuery?.number && sessionQuery.number < 0) {
-      return sessionQuery.number + sessions.length >= 0
-        ? createFollowUp([sessions[sessions.length + sessionQuery.number]])
+    if (query && query.number !== undefined && query.number < 0) {
+      return query.number + sessions.length >= 0
+        ? createFollowUp([sessions[sessions.length + query.number]])
         : "Invalid session number.";
     } else {
       return createFollowUp(sessions);
@@ -310,11 +319,13 @@ function parseSessions(response: QueryDatabaseResponse) {
         year = props.year.number;
       }
 
-      let gameDate: string | undefined;
+      const gameDate = day && month && year ? { day, month, year } : undefined;
+
+      let gameDateStr: string | undefined;
       if (props.gameDate && props.gameDate.type === "rich_text") {
-        gameDate = "";
+        gameDateStr = "";
         props.gameDate.rich_text.forEach(
-          (rich_text) => (gameDate += rich_text.plain_text)
+          (rich_text) => (gameDateStr += rich_text.plain_text)
         );
       }
 
@@ -340,10 +351,8 @@ function parseSessions(response: QueryDatabaseResponse) {
         number,
         title,
         description,
-        day,
-        month,
-        year,
         gameDate,
+        gameDateStr,
         author,
         moon,
         sessionDate

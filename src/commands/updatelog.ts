@@ -54,21 +54,21 @@ export const updateLog: Command = {
       const day = getNumberOrUndefined(interaction.options.get("day"));
       const year = getNumberOrUndefined(interaction.options.get("year"));
       const author = getMemberName(interaction);
-      const date =
+      const gameDate =
         month && day ? calendar.createDate(month, day, year) : undefined;
 
       try {
-        const gameDate = date ? calendar.formatDate(date) : undefined;
-        const moon = date ? calendar.getMoonPhase(date) : undefined;
+        const gameDateStr = gameDate
+          ? calendar.formatDate(gameDate)
+          : undefined;
+        const moon = gameDate ? calendar.getMoonPhase(gameDate) : undefined;
 
         const session: SessionInfo = {
           number,
           title,
           description,
-          day,
-          month,
-          year,
           gameDate,
+          gameDateStr,
           author,
           moon
         };

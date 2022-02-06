@@ -34,11 +34,13 @@ export function sessionToProperties(session: SessionInfo) {
   properties.description = session.description
     ? plainText(session.description)
     : undefined;
-  properties.day = session.day ? session.day : undefined;
-  properties.month = session.month ? session.month : undefined;
-  properties.year = session.year ? session.year : undefined;
-  properties.gameDate = session.gameDate
-    ? plainText(session.gameDate)
+  properties.day = session.gameDate?.day ? session.gameDate?.day : undefined;
+  properties.month = session.gameDate?.month
+    ? session.gameDate?.month
+    : undefined;
+  properties.year = session.gameDate?.year ? session.gameDate?.year : undefined;
+  properties.gameDate = session.gameDateStr
+    ? plainText(session.gameDateStr)
     : undefined;
   properties.sessionDate = session.sessionDate
     ? { start: session.sessionDate }

@@ -1,14 +1,19 @@
 import { BaseCommandInteraction, Client, MessageEmbed } from "discord.js";
 import { ApplicationCommandTypes } from "discord.js/typings/enums";
 import { Command } from "./commands";
-import { getNumberOrNull } from "./utility";
+import {
+  getNumberOrNull,
+  getNumberOrUndefined,
+  getStringOrNull,
+  getStringOrUndefined
+} from "./utility";
 import notion from "../data/notion/sessions";
 import { SessionInfo } from "src/utils/session";
 
 export const getSession: Command = {
   name: "getlog",
   description:
-    "Get a session log by number. (Default: -1, gets the previous session.)",
+    "Get a session log by number or title. (Default: Gets the previous session.)",
   type: ApplicationCommandTypes.CHAT_INPUT,
   options: [
     {
@@ -16,13 +21,23 @@ export const getSession: Command = {
       name: "number",
       description: "Session number",
       required: false
+    },
+    {
+      type: "STRING",
+      name: "search",
+      description: "String to search for in title or description.",
+      required: false
     }
   ],
   run: async (client: Client, interaction: BaseCommandInteraction) => {
-    const numArg = getNumberOrNull(interaction.options.get("number", false));
-    const number = numArg ? numArg : -1;
-    const response = await notion.querySessions({ number });
-    interaction.followUp(response);
+    const numArg = getNumberOrUndefined(
+      interaction.options.get("number", false)
+    );
+    const search = getStringOrUndefined(
+      interaction.options.get("search", false)
+    );
+    const number = numArg || search ? numArg : -1;
+    interaction.followUp(await notion.querySessions({ number, search }));
   }
 };
 

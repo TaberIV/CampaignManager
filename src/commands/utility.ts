@@ -66,8 +66,8 @@ export const optionalDateArgs: [
 function createSessionMessage(session: SessionInfo, url: string) {
   const body =
     (session.number ? `**Session ${session.number}**\n` : "") +
-    (session.gameDate
-      ? `**${session.gameDate}**` +
+    (session.gameDateStr
+      ? `**${session.gameDateStr}**` +
         (session.moon ? ` ${session.moon}` : "") +
         "\n"
       : "") +

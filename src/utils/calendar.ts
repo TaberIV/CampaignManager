@@ -1,11 +1,10 @@
-import { moon } from "src/commands/moon";
 import calendarData from "../data/calendar";
 
 const moonSymbols = ["🌗", "🌘", "🌑", "🌒", "🌓", "🌔", "🌕", "🌖"];
 
 const peakSymbols = { "🌘": "🌜", "🌑": "🌚", "🌒": "🌛", "🌕": "🌝" };
 
-type Date = {
+export type GameDate = {
   year: number;
   month: number;
   day: number;
@@ -17,7 +16,7 @@ function createDate(
   month: number,
   day: number,
   year?: number | null
-): Date | null {
+): GameDate | undefined {
   const monthsLen = calendarData.getMonthsLen();
   const months = calendarData.getMonths();
   const valid =
@@ -31,19 +30,19 @@ function createDate(
 
   const date = valid
     ? { year: year ? year : calendarData.getYear(), month, day }
-    : null;
+    : undefined;
 
   return date;
 }
 
-function formatDate(date: Date, moon?: boolean): string {
+function formatDate(date: GameDate, moon?: boolean): string {
   const moonStr = moon ? ` ${getMoonPhase(date)}` : "";
   return `${calendarData.getMonth(date.month)} ${date.day}, ${
     date.year
   }${moonStr}`;
 }
 
-function stringToDate(dateStr: string): Date | null {
+function stringToDate(dateStr: string): GameDate | null {
   const dateParts = dateStr.split("-");
 
   if (dateParts.length == 3) {
@@ -60,7 +59,7 @@ function stringToDate(dateStr: string): Date | null {
   return null;
 }
 
-function getDayOfWeek(date: Date) {
+function getDayOfWeek(date: GameDate) {
   const weekdays = calendarData.getWeekdays();
   const dayOfYear = getDayOfYear(date);
   const offset =
@@ -69,7 +68,7 @@ function getDayOfWeek(date: Date) {
   return weekdays[(dayOfYear - 1 + offset) % weekdays.length];
 }
 
-function getDayOfYear(date: Date): number {
+function getDayOfYear(date: GameDate): number {
   const { month, day } = date;
   const monthsLen = Object.values(calendarData.getMonthsLen());
   monthsLen.splice(month - 1);
@@ -82,7 +81,7 @@ function getDayOfYear(date: Date): number {
   return dayOfYear;
 }
 
-function getMoonPhase(date: Date): string | null {
+function getMoonPhase(date: GameDate): string | null {
   const moons = calendarData.getMoons();
   if (date.year < calendarData.getYear() || moons.length == 0) {
     return null;
