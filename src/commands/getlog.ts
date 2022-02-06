@@ -3,7 +3,7 @@ import { ApplicationCommandTypes } from "discord.js/typings/enums";
 import { Command } from "./commands";
 import { getNumberOrNull } from "./utility";
 import notion from "../data/notion/sessions";
-import { SessionQuery } from "src/utils/session";
+import { SessionInfo } from "src/utils/session";
 
 export const getSession: Command = {
   name: "getlog",

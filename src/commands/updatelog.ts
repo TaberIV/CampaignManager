@@ -10,10 +10,11 @@ import {
   optionalDateArgs,
   getNumberOrNull,
   getStringOrUndefined,
-  getMemberName
+  getMemberName,
+  getNumberOrUndefined
 } from "./utility";
 import notion from "../data/notion/sessions";
-import { SessionQuery } from "src/utils/session";
+import { SessionInfo } from "src/utils/session";
 
 export const updateLog: Command = {
   name: "updatelog",
@@ -44,14 +45,14 @@ export const updateLog: Command = {
   run: async (client: Client, interaction: BaseCommandInteraction) => {
     const number = getNumberOrNull(interaction.options.get("number"));
 
-    if (number) {
+    if (number !== null) {
       const title = getStringOrUndefined(interaction.options.get("title"));
       const description = getStringOrUndefined(
         interaction.options.get("description")
       );
-      const month = getNumberOrNull(interaction.options.get("month"));
-      const day = getNumberOrNull(interaction.options.get("day"));
-      const year = getNumberOrNull(interaction.options.get("year"));
+      const month = getNumberOrUndefined(interaction.options.get("month"));
+      const day = getNumberOrUndefined(interaction.options.get("day"));
+      const year = getNumberOrUndefined(interaction.options.get("year"));
       const author = getMemberName(interaction);
       const date =
         month && day ? calendar.createDate(month, day, year) : undefined;
@@ -60,11 +61,13 @@ export const updateLog: Command = {
         const gameDate = date ? calendar.formatDate(date) : undefined;
         const moon = date ? calendar.getMoonPhase(date) : undefined;
 
-        const session: SessionQuery = {
+        const session: SessionInfo = {
           number,
           title,
           description,
-          ...date,
+          day,
+          month,
+          year,
           gameDate,
           author,
           moon

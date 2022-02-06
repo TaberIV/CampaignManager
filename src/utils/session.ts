@@ -11,7 +11,7 @@ export type Session = {
   sessionDate: string;
 };
 
-export type SessionQuery = {
+export type SessionInfo = {
   number?: number;
   title?: string;
   description?: string;

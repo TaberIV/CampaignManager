@@ -16,7 +16,7 @@ export const DateError = new Error("InvalidDate");
 function createDate(
   month: number,
   day: number,
-  year: number | null
+  year?: number | null
 ): Date | null {
   const monthsLen = calendarData.getMonthsLen();
   const months = calendarData.getMonths();

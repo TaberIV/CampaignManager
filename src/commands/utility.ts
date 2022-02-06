@@ -5,10 +5,10 @@ import {
   InteractionReplyOptions,
   MessageEmbed
 } from "discord.js";
-import { SessionQuery } from "src/utils/session";
+import { SessionInfo } from "src/utils/session";
 
 export function getNumberOrNull(option: CommandInteractionOption | null) {
-  return option && option.value ? Number(option.value) : null;
+  return option && option.value !== undefined ? Number(option.value) : null;
 }
 
 export function getStringOrNull(option: CommandInteractionOption | null) {
@@ -63,7 +63,7 @@ export const optionalDateArgs: [
   { type: "NUMBER", name: "year", description: "In-game year", required: false }
 ];
 
-function createSessionMessage(session: SessionQuery, url: string) {
+function createSessionMessage(session: SessionInfo, url: string) {
   const body =
     (session.number ? `**Session ${session.number}**\n` : "") +
     (session.gameDate
@@ -109,7 +109,7 @@ export type FollowUp = InteractionReplyOptions | string;
 
 export function getFollowUp(
   response: {
-    session: SessionQuery;
+    session: SessionInfo;
     url: string;
   }[],
   content?: string

@@ -56,7 +56,7 @@ export const logSession: Command = {
 
     let followUp: FollowUp = "";
 
-    if (!number || number < 0) {
+    if (number < 0) {
       followUp = "Session number cannot be negative.";
     } else if (date == null) {
       followUp = "Invalid Date";
