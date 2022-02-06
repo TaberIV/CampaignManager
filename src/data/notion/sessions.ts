@@ -6,10 +6,11 @@ import {
 } from "@notionhq/client/build/src/api-endpoints";
 import { InteractionReplyOptions, MessageEmbed } from "discord.js";
 import {
-  createSessionMessage,
-  getFollowUp as createFollowUp
+  getFollowUp as createFollowUp,
+  getFollowUp
 } from "../../commands/utility";
 import { Session, SessionQuery } from "src/utils/session";
+import calendar from "../../utils/calendar";
 // import config from "../config/default";
 
 const notion = new Client({ auth: process.env.NOTION_TOKEN });
@@ -18,18 +19,6 @@ const database_id = String(process.env.NOTION_DATABASE_ID);
 function plainText(content: string) {
   return [{ text: { content } }];
 }
-
-// function buildLogPage(
-//   title: string,
-//   description: string,
-//   number: number | null,
-//   gameDate: string | null,
-//   gameDateRaw: string | null,
-//   moon: string | null,
-//   author: string
-// ): BlockObjectRequest> | nul[] {
-//   return null;
-// }
 
 async function logSession(session: Session): Promise<string | null> {
   const params: CreatePageParameters = {
@@ -43,10 +32,6 @@ async function logSession(session: Session): Promise<string | null> {
         type: "rich_text",
         rich_text: plainText(session.description)
       },
-      gameDate: {
-        type: "rich_text",
-        rich_text: plainText(session.gameDate)
-      },
       day: {
         type: "number",
         number: session.number
@@ -59,9 +44,9 @@ async function logSession(session: Session): Promise<string | null> {
         type: "number",
         number: session.number
       },
-      gameDateFmt: {
+      gameDate: {
         type: "rich_text",
-        rich_text: plainText(session.gameDateFmt)
+        rich_text: plainText(session.gameDate)
       },
       sessionDate: {
         type: "date",
@@ -81,125 +66,184 @@ async function logSession(session: Session): Promise<string | null> {
     };
   }
 
-  try {
-    const response = await notion.pages.create(params);
+  const response = await notion.pages.create(params);
 
-    if ("url" in response) {
-      return response.url;
-    }
-  } catch (e: unknown) {
-    if (typeof e === "string") {
-      console.log(e.toUpperCase());
-    } else if (e instanceof Error) {
-      console.log(e.message);
-    }
+  if ("url" in response) {
+    return response.url;
   }
 
   return null;
 }
 
-async function updateSession(session: SessionQuery) {
-  if (session.number) {
-    const response = await notion.databases.query({
-      database_id,
-      filter: {
+async function updateSession(session?: SessionQuery) {
+  let filter = session?.number
+    ? {
         property: "number",
         number: {
           equals: session.number
         }
       }
-    });
+    : undefined;
 
-    const sessions: { session: SessionQuery; url: string }[] =
-      parseSessions(response);
+  const direction: "ascending" | "descending" = "ascending";
+  const sorts = [{ property: "number", direction }];
+  const response = await notion.databases.query({
+    database_id,
+    filter,
+    sorts
+  });
+  const sessions: { session: SessionQuery; url: string }[] =
+    parseSessions(response);
 
-    if (response.results.length === 1) {
-      const [page] = response.results;
-      const [res] = sessions;
-
-      if ("properties" in page) {
-        const properties: any = {
-          number: { type: "number", number: session.number }
-        };
-
-        if (session.title) {
-          properties.title = {
-            title: plainText(session.title)
-          };
-        }
-        if (session.description) {
-          properties.description = {
-            description: plainText(session.description)
-          };
-        }
-        if (session.gameDate) {
-          properties.gameDate = {
-            gameDate: plainText(session.gameDate)
-          };
-        }
-        if (session.day) {
-          properties.day = {
-            day: session.day
-          };
-        }
-        if (session.month) {
-          properties.month = {
-            month: session.month
-          };
-        }
-        if (session.year) {
-          properties.year = {
-            year: session.year
-          };
-        }
-        if (session.gameDateFmt) {
-          properties.gameDateFmt = {
-            gameDateFmt: plainText(session.gameDateFmt)
-          };
-        }
-        if (session.sessionDate) {
-          properties.sessionDate = {
-            sessionDate: plainText(session.sessionDate)
-          };
-        }
-
-        if (session.author) {
-          if (
-            "author" in page.properties &&
-            "rich_text" in page.properties.author
-          ) {
-            let existingAuthor = "";
-            page.properties.author.rich_text.forEach((rich_text) => {
-              existingAuthor += rich_text.plain_text;
-            });
-
-            const author = existingAuthor.includes(session.author)
-              ? existingAuthor
-              : existingAuthor + session.author;
-            properties.author = {
-              author
-            };
-          } else {
-            properties.author = {
-              author: plainText(session.author)
-            };
-          }
-        }
-
-        const updateRes = await notion.pages.update({
-          page_id: page.id,
-          properties
-        });
-      }
+  if (session?.number && response.results.length !== 1) {
+    return createFollowUp(
+      sessions,
+      "The following logs have duplicate sessions numbers, this is invalid. No changes were made."
+    );
+  } else if (response.results.length === 0) {
+    if (session?.number) {
+      return "No log was found with that number";
     } else {
-      return createFollowUp(
-        sessions,
-        "The following logs have duplicate sessions numbers, this is invalid. No changes were made."
-      );
+      return "Logbook empty.";
     }
   }
 
-  return "Must specify a session number";
+  const entries = await Promise.all(
+    sessions.map(async (entry, index) => {
+      const page = response.results[index];
+      const { session: res, url } = entry;
+
+      if ("properties" in page) {
+        const properties: any = {};
+        const updatedSession: SessionQuery = session
+          ? { ...session }
+          : { ...res };
+
+        if (session) {
+          // Inputted values
+          if (session.number) {
+            properties.number = { type: "number", number: session.number };
+          }
+
+          let edited = false;
+          if (session.title) {
+            properties.title = {
+              type: "title",
+              title: plainText(session.title),
+              id: page.properties.title.id
+            };
+            edited = true;
+          } else if (res.title) {
+            updatedSession.title = res.title;
+          }
+
+          if (session.description) {
+            properties.description = {
+              type: "rich_text",
+              rich_text: plainText(session.description),
+              id: page.properties.description.id
+            };
+            edited = true;
+          } else if (res.description) {
+            updatedSession.description = res.description;
+          }
+
+          if (session.day) {
+            properties.day = {
+              type: "number",
+              number: updatedSession.day,
+              id: page.properties.day.id
+            };
+          } else if (res.day) {
+            updatedSession.day = res.day;
+          }
+
+          if (session.month) {
+            properties.month = {
+              type: "number",
+              number: updatedSession.month,
+              id: page.properties.month.id
+            };
+          } else if (res.month) {
+            updatedSession.month = res.month;
+          }
+
+          if (session.year) {
+            properties.year = {
+              type: "number",
+              number: updatedSession.year,
+              id: page.properties.year.id
+            };
+          } else if (res.year) {
+            updatedSession.year = res.year;
+          }
+
+          if (session.author && edited) {
+            if (res.author && !res.author.split(",").includes(session.author)) {
+              properties.author = {
+                type: "rich_text",
+                rich_text: plainText(`${res.author}, ${session?.author}`),
+                id: page.properties.author.id
+              };
+            } else {
+              properties.author = {
+                type: "rich_text",
+                rich_text: plainText(session?.author),
+                id: page.properties.author.id
+              };
+            }
+          }
+        }
+
+        // Derived values
+        if (updatedSession.year && updatedSession.month && updatedSession.day) {
+          const updatedDate = calendar.createDate(
+            updatedSession.month,
+            updatedSession.day,
+            updatedSession.year
+          );
+
+          if (updatedDate) {
+            updatedSession.gameDate = calendar.formatDate(updatedDate);
+            properties.gameDate = {
+              type: "rich_text",
+              rich_text: plainText(updatedSession.gameDate),
+              id: page.properties.gameDate.id
+            };
+          }
+
+          updatedSession.moon = updatedDate
+            ? calendar.getMoonPhase(updatedDate)
+            : session?.moon;
+        }
+
+        if (updatedSession.moon) {
+          properties.moon = {
+            type: "rich_text",
+            rich_text: plainText(updatedSession.moon),
+            id: page.properties.moon.id
+          };
+        }
+
+        await notion.pages.update({
+          page_id: page.id,
+          properties
+        });
+
+        return {
+          session: updatedSession,
+          url
+        };
+      }
+      return { session: { title: "Error retrieving session" }, url };
+    })
+  );
+
+  const content =
+    entries.length == 1 && entries[0]
+      ? `Session ${entries[0].session.number}: **${entries[0].session.title}** was updated successfully.`
+      : "All logs updated successfully.";
+  return getFollowUp(entries, content);
 }
 
 async function querySessions(
@@ -265,69 +309,90 @@ function parseSessions(response: QueryDatabaseResponse) {
 
       let number: number | undefined;
       if (
-        props["number"] &&
-        props["number"].type === "number" &&
-        props["number"].number !== null
+        props.number &&
+        props.number.type === "number" &&
+        props.number.number !== null
       ) {
-        number = props["number"].number;
+        number = props.number.number;
       }
 
       let title: string | undefined;
-      if (props["title"] && props["title"].type === "title") {
+      if (props.title && props.title.type === "title") {
         title = "";
-        props["title"].title.forEach(
+        props.title.title.forEach(
           (rich_text) => (title += rich_text.plain_text)
         );
       }
 
       let description: string | undefined;
-      if (props["description"] && props["description"].type === "rich_text") {
+      if (props.description && props.description.type === "rich_text") {
         description = "";
-        props["description"].rich_text.forEach(
+        props.description.rich_text.forEach(
           (rich_text) => (description += rich_text.plain_text)
         );
       }
 
+      let day: number | undefined;
+      if (
+        props.day &&
+        props.day.type === "number" &&
+        props.day.number !== null
+      ) {
+        day = props.day.number;
+      }
+
+      let month: number | undefined;
+      if (
+        props.month &&
+        props.month.type === "number" &&
+        props.month.number !== null
+      ) {
+        month = props.month.number;
+      }
+
+      let year: number | undefined;
+      if (
+        props.year &&
+        props.year.type === "number" &&
+        props.year.number !== null
+      ) {
+        year = props.year.number;
+      }
+
       let gameDate: string | undefined;
-      if (props["gameDate"] && props["gameDate"].type === "rich_text") {
+      if (props.gameDate && props.gameDate.type === "rich_text") {
         gameDate = "";
-        props["gameDate"].rich_text.forEach(
+        props.gameDate.rich_text.forEach(
           (rich_text) => (gameDate += rich_text.plain_text)
         );
       }
 
-      let gameDateFmt: string | undefined;
-      if (props["gameDateFmt"] && props["gameDateFmt"].type === "rich_text") {
-        gameDateFmt = "";
-        props["gameDateFmt"].rich_text.forEach(
-          (rich_text) => (gameDateFmt += rich_text.plain_text)
-        );
-      }
-
       let author: string | undefined;
-      if (props["author"] && props["author"].type === "rich_text") {
+      if (props.author && props.author.type === "rich_text") {
         author = "";
-        props["author"].rich_text.forEach(
+        props.author.rich_text.forEach(
           (rich_text) => (author += rich_text.plain_text)
         );
       }
 
       let moon: string | null = null;
-      if (props["moon"] && props["moon"].type === "rich_text") {
-        moon = props["moon"].rich_text[0]?.plain_text;
+      if (props.moon && props.moon.type === "rich_text") {
+        moon = props.moon.rich_text[0]?.plain_text;
       }
 
       let sessionDate: string | undefined;
-      if (props["sessionDate"] && props["sessionDate"].type === "date") {
-        sessionDate = props["sessionDate"].date?.start;
+      if (props.sessionDate && props.sessionDate.type === "date") {
+        sessionDate = props.sessionDate.date?.start;
       }
 
       const session: SessionQuery = {
         number,
         title,
         description,
+        day,
+        month,
+        year,
         gameDate,
-        gameDateFmt,
         author,
         moon,
         sessionDate

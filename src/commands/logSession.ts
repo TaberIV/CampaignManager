@@ -9,8 +9,8 @@ import { Command } from "./commands";
 import {
   optionalDateArgs,
   getNumberOrNull,
-  createSessionMessage,
-  FollowUp
+  FollowUp,
+  getFollowUp
 } from "./utility";
 import notion from "../data/notion/sessions";
 import { Session } from "src/utils/session";
@@ -50,28 +50,26 @@ export const logSession: Command = {
     const day = Number(interaction.options.get("day", true).value);
     const year = getNumberOrNull(interaction.options.get("year"));
     const author = interaction.user.username;
-    const gameDate = calendar.createDate(month, day, year);
+    const date = calendar.createDate(month, day, year);
     const sessionDate = new Date().toISOString().split("T")[0];
 
     let followUp: FollowUp = "";
 
     if (!number || number < 0) {
       followUp = "Session number cannot be negative.";
-    } else if (gameDate == null) {
+    } else if (date == null) {
       followUp = "Invalid Date";
     } else {
       try {
-        const gameDateFmt = calendar.formatDate(gameDate);
-        const gameDateStr = calendar.dateToString(gameDate);
-        const moon = calendar.getMoonPhase(gameDate);
+        const gameDate = calendar.formatDate(date);
+        const moon = calendar.getMoonPhase(date);
 
         const session: Session = {
           number,
           title,
           description,
-          gameDate: gameDateStr,
-          ...gameDate,
-          gameDateFmt,
+          ...date,
+          gameDate,
           author,
           moon,
           sessionDate
@@ -80,8 +78,7 @@ export const logSession: Command = {
         const url = await notion.logSession(session);
 
         if (url) {
-          const embed = createSessionMessage(session, url);
-          followUp = { ephemeral: true, embeds: [embed] };
+          followUp = getFollowUp([{ session, url }]);
         }
       } catch (e) {
         followUp = "There was an internal error.";

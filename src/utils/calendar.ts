@@ -43,10 +43,6 @@ function formatDate(date: Date, moon?: boolean): string {
   }${moonStr}`;
 }
 
-function dateToString({ year, month, day }: Date): string {
-  return `${year}-${month}-${day}`;
-}
-
 function stringToDate(dateStr: string): Date | null {
   const dateParts = dateStr.split("-");
 
@@ -130,6 +126,5 @@ export default {
   getDayOfYear,
   getDayOfWeek,
   formatDate,
-  dateToString,
   stringToDate
 };

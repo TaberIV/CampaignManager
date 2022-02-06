@@ -62,11 +62,11 @@ export const optionalDateArgs: [
   { type: "NUMBER", name: "year", description: "In-game year", required: false }
 ];
 
-export function createSessionMessage(session: SessionQuery, url: string) {
+function createSessionMessage(session: SessionQuery, url: string) {
   const body =
     (session.number ? `**Session ${session.number}**\n` : "") +
-    (session.gameDateFmt
-      ? `**${session.gameDateFmt}**` +
+    (session.gameDate
+      ? `**${session.gameDate}**` +
         (session.moon ? ` ${session.moon}` : "") +
         "\n"
       : "") +

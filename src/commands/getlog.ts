@@ -1,7 +1,7 @@
 import { BaseCommandInteraction, Client, MessageEmbed } from "discord.js";
 import { ApplicationCommandTypes } from "discord.js/typings/enums";
 import { Command } from "./commands";
-import { createSessionMessage, getNumberOrNull } from "./utility";
+import { getNumberOrNull } from "./utility";
 import notion from "../data/notion/sessions";
 import { SessionQuery } from "src/utils/session";
 

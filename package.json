@@ -8,9 +8,10 @@
   "main": "src/server.ts",
   "type": "commonjs",
   "scripts": {
-    "app": "nodemon src/server.ts",
+    "app": ". ./setTokens.sh; nodemon src/server.ts",
     "start": "node dist/server.js",
     "postinstall": "tsc",
+    "build": "tsc",
     "watch-node": "nodemon dist/index.js",
     "watch-ts": "tsc -w",
     "deploy": "git push heroku main",

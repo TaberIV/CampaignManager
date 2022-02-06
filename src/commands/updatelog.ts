@@ -9,22 +9,23 @@ import { Command } from "./commands";
 import {
   optionalDateArgs,
   getNumberOrNull,
-  createSessionMessage,
-  getStringOrUndefined
+  getStringOrUndefined,
+  FollowUp
 } from "./utility";
 import notion from "../data/notion/sessions";
 import { SessionQuery } from "src/utils/session";
 
 export const updateLog: Command = {
   name: "updatelog",
-  description: "Update an existing session by number.",
+  description:
+    "Update an existing setting log by number, or update all log pages.",
   type: ApplicationCommandTypes.CHAT_INPUT,
   options: [
     {
       type: "NUMBER",
       name: "number",
       description: "Session number",
-      required: true
+      required: false
     },
     {
       type: "STRING",
@@ -41,41 +42,46 @@ export const updateLog: Command = {
     ...optionalDateArgs
   ],
   run: async (client: Client, interaction: BaseCommandInteraction) => {
-    const number = Number(interaction.options.get("number", true).value);
-    const title = getStringOrUndefined(interaction.options.get("title"));
-    const description = getStringOrUndefined(
-      interaction.options.get("description")
-    );
-    const month = getNumberOrNull(interaction.options.get("month"));
-    const day = getNumberOrNull(interaction.options.get("day"));
-    const year = getNumberOrNull(interaction.options.get("year"));
-    const author = interaction.user.username;
-    const gameDate =
-      month && day ? calendar.createDate(month, day, year) : undefined;
+    const number = getNumberOrNull(interaction.options.get("number"));
 
-    let followUp: string | InteractionReplyOptions = "";
-    try {
-      const gameDateFmt = gameDate ? calendar.formatDate(gameDate) : undefined;
-      const gameDateStr = gameDate
-        ? calendar.dateToString(gameDate)
-        : undefined;
-      const moon = gameDate ? calendar.getMoonPhase(gameDate) : undefined;
+    if (number) {
+      const title = getStringOrUndefined(interaction.options.get("title"));
+      const description = getStringOrUndefined(
+        interaction.options.get("description")
+      );
+      const month = getNumberOrNull(interaction.options.get("month"));
+      const day = getNumberOrNull(interaction.options.get("day"));
+      const year = getNumberOrNull(interaction.options.get("year"));
+      const author = interaction.user.username;
+      const date =
+        month && day ? calendar.createDate(month, day, year) : undefined;
 
-      const session: SessionQuery = {
-        number,
-        title,
-        description,
-        gameDate: gameDateStr,
-        gameDateFmt,
-        author,
-        moon
-      };
+      try {
+        const gameDate = date ? calendar.formatDate(date) : undefined;
+        const moon = date ? calendar.getMoonPhase(date) : undefined;
 
-      followUp = await notion.updateSession(session);
-    } catch (e) {
-      followUp = "There was an internal error.";
+        const session: SessionQuery = {
+          number,
+          title,
+          description,
+          ...date,
+          gameDate,
+          author,
+          moon
+        };
+
+        interaction.followUp(await notion.updateSession(session));
+      } catch (e) {
+        console.log(e);
+      }
+    } else if (interaction.options.data.length === 0) {
+      interaction.followUp(await notion.updateSession());
+    } else {
+      interaction.followUp(
+        "You provided log details but no session number. If you want to create a session use `/logsession`" +
+          ", or if you want to update an existing log include the session number." +
+          " Run `/updatelog` with no argumetns to regenerate all logs' Notion pages."
+      );
     }
-
-    await interaction.followUp(followUp);
   }
 };

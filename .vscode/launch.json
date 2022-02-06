@@ -6,6 +6,7 @@
   "configurations": [
     {
       "type": "pwa-node",
+      "preLaunchTask": "npm: build",
       "envFile": "${workspaceFolder}/.env",
       "request": "launch",
       "name": "Launch Program",
