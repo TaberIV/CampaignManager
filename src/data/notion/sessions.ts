@@ -286,10 +286,16 @@ async function querySessions(
   const sessions: { session: SessionQuery; url: string }[] =
     parseSessions(response);
 
-  if (sessionQuery?.number && sessionQuery.number < 0) {
-    return createFollowUp([sessions[sessions.length + sessionQuery.number]]);
+  if (sessions.length > 0) {
+    if (sessionQuery?.number && sessionQuery.number < 0) {
+      return sessionQuery.number + sessions.length >= 0
+        ? createFollowUp([sessions[sessions.length + sessionQuery.number]])
+        : "Invalid session number.";
+    } else {
+      return createFollowUp(sessions);
+    }
   } else {
-    return createFollowUp(sessions);
+    return "No sessions found.";
   }
 }
 

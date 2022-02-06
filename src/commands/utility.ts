@@ -114,14 +114,16 @@ export function getFollowUp(
   }[],
   content?: string
 ): FollowUp {
-  const embeds = response.map((res) => {
-    return createSessionMessage(res.session, res.url);
-  });
-  return {
-    ephemeral: true,
-    embeds,
-    content
-  };
+  if (response.length > 0) {
+    const embeds = response.map((res) => {
+      return createSessionMessage(res.session, res.url);
+    });
+    return {
+      ephemeral: true,
+      embeds,
+      content
+    };
+  } else return "No logs";
 }
 
 export function getMemberName(interaction: Interaction) {
