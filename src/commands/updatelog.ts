@@ -10,7 +10,8 @@ import {
   optionalDateArgs,
   getNumberOrNull,
   getStringOrUndefined,
-  FollowUp
+  FollowUp,
+  getMemberName
 } from "./utility";
 import notion from "../data/notion/sessions";
 import { SessionQuery } from "src/utils/session";
@@ -52,7 +53,7 @@ export const updateLog: Command = {
       const month = getNumberOrNull(interaction.options.get("month"));
       const day = getNumberOrNull(interaction.options.get("day"));
       const year = getNumberOrNull(interaction.options.get("year"));
-      const author = interaction.user.username;
+      const author = getMemberName(interaction);
       const date =
         month && day ? calendar.createDate(month, day, year) : undefined;
 

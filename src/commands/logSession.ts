@@ -10,7 +10,8 @@ import {
   optionalDateArgs,
   getNumberOrNull,
   FollowUp,
-  getFollowUp
+  getFollowUp,
+  getMemberName
 } from "./utility";
 import notion from "../data/notion/sessions";
 import { Session } from "src/utils/session";
@@ -49,7 +50,7 @@ export const logSession: Command = {
     const month = Number(interaction.options.get("month", true).value);
     const day = Number(interaction.options.get("day", true).value);
     const year = getNumberOrNull(interaction.options.get("year"));
-    const author = interaction.user.username;
+    const author = getMemberName(interaction);
     const date = calendar.createDate(month, day, year);
     const sessionDate = new Date().toISOString().split("T")[0];
 

@@ -1,6 +1,7 @@
 import {
   ApplicationCommandOption,
   CommandInteractionOption,
+  Interaction,
   InteractionReplyOptions,
   MessageEmbed
 } from "discord.js";
@@ -107,4 +108,12 @@ export function getFollowUp(
     embeds,
     content
   };
+}
+
+export function getMemberName(interaction: Interaction) {
+  return interaction.member &&
+    "nickname" in interaction.member &&
+    interaction.member.nickname
+    ? interaction.member.nickname
+    : interaction.user.username;
 }
