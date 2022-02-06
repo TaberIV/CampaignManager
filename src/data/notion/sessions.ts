@@ -75,7 +75,7 @@ async function logSession(session: Session): Promise<string | null> {
   return null;
 }
 
-async function updateSession(session?: SessionQuery) {
+async function updateLog(session?: SessionQuery) {
   let filter = session?.number
     ? {
         property: "number",
@@ -182,7 +182,7 @@ async function updateSession(session?: SessionQuery) {
             if (res.author && !res.author.includes(session.author)) {
               properties.author = {
                 type: "rich_text",
-                rich_text: plainText(`${res.author}, ${session?.author}`),
+                rich_text: plainText(`${res.author}\n${session?.author}`),
                 id: page.properties.author.id
               };
             }
@@ -293,7 +293,7 @@ async function querySessions(
   }
 }
 
-export default { logSession, querySessions, updateSession };
+export default { logSession, querySessions, updateSession: updateLog };
 
 function parseSessions(response: QueryDatabaseResponse) {
   const sessions: { session: SessionQuery; url: string }[] = [];

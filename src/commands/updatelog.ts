@@ -10,7 +10,6 @@ import {
   optionalDateArgs,
   getNumberOrNull,
   getStringOrUndefined,
-  FollowUp,
   getMemberName
 } from "./utility";
 import notion from "../data/notion/sessions";

@@ -73,18 +73,34 @@ function createSessionMessage(session: SessionQuery, url: string) {
       : "") +
     `${session.description}`;
 
-  const footer =
-    (session.author ? session.author : "") +
-    (session.author && session.sessionDate ? ", " : "") +
-    (session.sessionDate ? new Date(session.sessionDate).toDateString() : "");
+  let footer = "";
+  const authors = session.author ? session.author.split("\n") : [];
+  if (authors.length > 0) {
+    if (authors.length === 1) {
+      footer = authors[0];
+    } else {
+      const [last] = authors.splice(authors.length - 1, 1, "and");
+      footer = authors.join(", ") + " " + last;
+    }
+  }
+  if (session.sessionDate) {
+    const dateStr = session.sessionDate
+      ? new Date(session.sessionDate).toDateString()
+      : "";
+    footer += footer ? ` (${dateStr})` : ` ${dateStr}`;
+  }
 
   const embed = new MessageEmbed()
     .setColor("RANDOM")
     .setTitle(`${session.title}`)
     .setDescription(`${body}\n[View on Notion](${url})`)
-    .setFooter({
-      text: footer
-    });
+    .setFooter(
+      footer
+        ? {
+            text: footer
+          }
+        : null
+    );
 
   return embed;
 }
@@ -98,10 +114,8 @@ export function getFollowUp(
   }[],
   content?: string
 ): FollowUp {
-  const embeds: Array<MessageEmbed> = [];
-  response.forEach((res) => {
-    const { session, url } = res;
-    embeds.push(createSessionMessage(session, url));
+  const embeds = response.map((res) => {
+    return createSessionMessage(res.session, res.url);
   });
   return {
     ephemeral: true,
