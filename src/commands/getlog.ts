@@ -36,7 +36,7 @@ export const getSession: Command = {
     const search = getStringOrUndefined(
       interaction.options.get("search", false)
     );
-    const number = numArg || search ? numArg : -1;
+    const number = numArg !== undefined || search ? numArg : -1;
     interaction.followUp(await notion.querySessions({ number, search }));
   }
 };

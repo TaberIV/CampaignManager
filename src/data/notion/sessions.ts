@@ -12,7 +12,7 @@ import { plainText, sessionToProperties } from "./utils";
 const notion = new Client({ auth: process.env.NOTION_TOKEN });
 const database_id = String(process.env.NOTION_DATABASE_ID);
 
-async function logSession(session: SessionInfo): Promise<string | null> {
+async function logSession(session: Session): Promise<string | null> {
   const response = await notion.pages.create({
     parent: { database_id },
     properties: sessionToProperties(session)
@@ -119,6 +119,26 @@ async function updateLog(session?: SessionInfo) {
             updatedSession.gameDate = res.gameDate;
           }
 
+          if (session.gameDateEnd) {
+            properties.day = {
+              type: "number",
+              number: session.gameDateEnd.day,
+              id: page.properties.day.id
+            };
+            properties.month = {
+              type: "number",
+              number: session.gameDateEnd.month,
+              id: page.properties.month.id
+            };
+            properties.year = {
+              type: "number",
+              number: session.gameDateEnd.year,
+              id: page.properties.year.id
+            };
+          } else if (res.gameDateEnd) {
+            updatedSession.gameDateEnd = res.gameDateEnd;
+          }
+
           if (session.author && edited) {
             if (res.author && !res.author.includes(session.author)) {
               properties.author = {
@@ -205,7 +225,7 @@ async function querySessions(
   let filter: any = query ? { and: [] } : {};
 
   if (query) {
-    if (query.number) {
+    if (query.number !== undefined) {
       if (query.number >= 0) {
         filter.and.push({
           property: "number",

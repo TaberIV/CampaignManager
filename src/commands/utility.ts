@@ -16,7 +16,9 @@ export function getStringOrNull(option: CommandInteractionOption | null) {
 }
 
 export function getNumberOrUndefined(option: CommandInteractionOption | null) {
-  return option && option.value ? Number(option.value) : undefined;
+  return option && option.value !== undefined
+    ? Number(option.value)
+    : undefined;
 }
 
 export function getStringOrUndefined(option: CommandInteractionOption | null) {
@@ -61,6 +63,31 @@ export const optionalDateArgs: [
     required: false
   },
   { type: "NUMBER", name: "year", description: "In-game year", required: false }
+];
+
+export const endDateArgs: [
+  ApplicationCommandOption,
+  ApplicationCommandOption,
+  ApplicationCommandOption
+] = [
+  {
+    type: "NUMBER",
+    name: "month-end",
+    description: "In-game month (number) that the session ended on",
+    required: false
+  },
+  {
+    type: "NUMBER",
+    name: "day-end",
+    description: "In-game day of the month that the session ended on",
+    required: false
+  },
+  {
+    type: "NUMBER",
+    name: "year-end",
+    description: "In-game year the session ended on",
+    required: false
+  }
 ];
 
 function createSessionMessage(session: SessionInfo, url: string) {

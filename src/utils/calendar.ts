@@ -1,3 +1,4 @@
+import { getAutomaticTypeDirectiveNames } from "typescript";
 import calendarData from "../data/calendar";
 
 const moonSymbols = ["🌗", "🌘", "🌑", "🌒", "🌓", "🌔", "🌕", "🌖"];
@@ -40,6 +41,32 @@ function formatDate(date: GameDate, moon?: boolean): string {
   return `${calendarData.getMonth(date.month)} ${date.day}, ${
     date.year
   }${moonStr}`;
+}
+
+function formatDateRange(date1: GameDate, date2: GameDate, moon?: boolean) {
+  const compare = compareDates(date1, date2);
+  if (compare === 0) {
+    const moonStr = moon ? ` ${getMoonPhase(date1)}` : "";
+    return `${calendarData.getMonth(date1.month)} ${date1.day}, ${
+      date1.year
+    }${moonStr}`;
+  } else if (compare === 1) {
+    let dates = "";
+    if (date1.year !== date2.year) {
+      dates = formatDate(date1) + " - " + formatDate(date2);
+    } else if (date1.month !== date2.month) {
+      dates = `${calendarData.getMonth(date1.month)} ${
+        date1.day
+      } - ${calendarData.getMonth(date1.month)} ${date1.day}, ${date1.year}`;
+    } else {
+      dates = `${calendarData.getMonth(date1.month)} ${date1.day} - ${
+        date2.day
+      }, ${date1.year}`;
+    }
+    return dates;
+  } else {
+    return "dates in wrong order";
+  }
 }
 
 function stringToDate(dateStr: string): GameDate | null {
@@ -119,11 +146,23 @@ function getMoonPhase(date: GameDate): string | null {
   }
 }
 
+function compareDates(date1: GameDate, date2: GameDate) {
+  if (date1.year !== date2.year) {
+    return date1.year > date2.year ? -1 : 1;
+  } else {
+    const day1 = getDayOfYear(date1);
+    const day2 = getDayOfYear(date2);
+    return day1 === day2 ? 0 : day1 > day2 ? -1 : 1;
+  }
+}
+
 export default {
   createDate,
   getMoonPhase,
   getDayOfYear,
   getDayOfWeek,
   formatDate,
-  stringToDate
+  formatDateRange,
+  stringToDate,
+  compareDates
 };

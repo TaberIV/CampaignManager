@@ -5,6 +5,7 @@ export type Session = {
   title: string;
   description: string;
   gameDate: GameDate;
+  gameDateEnd?: GameDate;
   gameDateStr: string;
   author: string;
   moon: string | null;
@@ -16,6 +17,7 @@ export type SessionInfo = {
   title?: string;
   description?: string;
   gameDate?: GameDate;
+  gameDateEnd?: GameDate;
   gameDateStr?: string;
   author?: string;
   moon?: string | null;
