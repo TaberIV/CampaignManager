@@ -2,6 +2,7 @@ import { BaseCommandInteraction, Client, MessageEmbed } from "discord.js";
 import { ApplicationCommandTypes } from "discord.js/typings/enums";
 import { Command } from "./commands";
 import {
+  getFollowUp,
   getNumberOrNull,
   getNumberOrUndefined,
   getStringOrNull,
@@ -37,17 +38,32 @@ export const getSession: Command = {
       interaction.options.get("search", false)
     );
     const number = numArg !== undefined || search ? numArg : -1;
-    interaction.followUp(await notion.querySessions({ number, search }));
+    interaction.followUp(
+      getFollowUp(await notion.querySessions({ number, search }))
+    );
   }
 };
 
 export const getAllSessions: Command = {
   name: "readlog",
-  description: "View the entire session log.",
+  description:
+    "Get a number of the most recent past session logs. (Default/Maximum: 10)",
   type: ApplicationCommandTypes.CHAT_INPUT,
-  options: [],
+  options: [
+    {
+      type: "NUMBER",
+      name: "number",
+      description: "Number of sessions",
+      required: false
+    }
+  ],
   run: async (client: Client, interaction: BaseCommandInteraction) => {
-    const response = await notion.querySessions();
-    interaction.followUp(response);
+    const numArg = getNumberOrUndefined(
+      interaction.options.get("number", false)
+    );
+    const limit = numArg !== undefined ? numArg : 10;
+
+    const response = await notion.querySessions({ limit });
+    interaction.followUp(getFollowUp(response));
   }
 };

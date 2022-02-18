@@ -1,10 +1,7 @@
 import { Client } from "@notionhq/client";
 import { QueryDatabaseResponse } from "@notionhq/client/build/src/api-endpoints";
 import { InteractionReplyOptions, MessageEmbed } from "discord.js";
-import {
-  getFollowUp as createFollowUp,
-  getFollowUp
-} from "../../commands/utility";
+import { getFollowUp } from "../../commands/utility";
 import { Session, SessionInfo } from "src/utils/session";
 import calendar from "../../utils/calendar";
 import { plainText, sessionToProperties } from "./utils";
@@ -47,7 +44,7 @@ async function updateLog(session?: SessionInfo) {
     parseSessions(response);
 
   if (session?.number !== undefined && response.results.length > 1) {
-    return createFollowUp(
+    return getFollowUp(
       sessions,
       "The following logs have duplicate sessions numbers, this is invalid. No changes were made."
     );
@@ -219,10 +216,10 @@ async function updateLog(session?: SessionInfo) {
 }
 
 async function querySessions(
-  query?: { number?: number; search?: string },
+  query?: { number?: number; search?: string; limit?: number },
   direction: "ascending" | "descending" = "ascending"
 ) {
-  let filter: any = query ? { and: [] } : {};
+  let filter: any = { and: [] };
 
   if (query) {
     if (query.number !== undefined) {
@@ -263,19 +260,14 @@ async function querySessions(
     sorts
   });
 
-  const sessions: { session: SessionInfo; url: string }[] =
-    parseSessions(response);
+  const sessions = parseSessions(response);
 
-  if (sessions.length > 0) {
-    if (query && query.number !== undefined && query.number < 0) {
-      return query.number + sessions.length >= 0
-        ? createFollowUp([sessions[sessions.length + query.number]])
-        : "Invalid session number.";
-    } else {
-      return createFollowUp(sessions);
-    }
+  if (query?.number !== undefined && query.number < 0) {
+    return query.number + sessions.length >= 0
+      ? [sessions[sessions.length + query.number]]
+      : [];
   } else {
-    return "No sessions found.";
+    return sessions;
   }
 }
 

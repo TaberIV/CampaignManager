@@ -139,10 +139,13 @@ export function getFollowUp(
     session: SessionInfo;
     url: string;
   }[],
-  content?: string
+  content?: string,
+  limit?: number
 ): FollowUp {
   if (response.length > 0) {
-    const embeds = response.map((res) => {
+    const max = limit ? limit : 10;
+    const sessionList = response.splice(response.length - max);
+    const embeds = sessionList.map((res) => {
       return createSessionMessage(res.session, res.url);
     });
     return {
